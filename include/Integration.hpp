@@ -17,6 +17,7 @@
 #include <vector>
 #include <fstream>
 
+#include <Observation.hpp>
 #include <utils.hpp>
 
 #ifndef INTEGRATION_HPP
