@@ -99,6 +99,7 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
     "inGlobalMemory += " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ";\n"
     "inLocalMemory += " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ";\n"
     "}\n"
+    "<%LOAD%>"
     "barrier(CLK_LOCAL_MEM_FENCE);\n"
     "// Reduce\n"
     "unsigned int threshold = " + isa::utils::toString(integration / 2) + ";\n"
@@ -119,11 +120,13 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
   *code += "}\n"
     "}\n";
   std::string defs_sTemplate = dataName + " integratedSample<%NUM%> = 0;\n";
+  std::string load_sTemplate = "integratedSample<%NUM%> = buffer[get_local_id(0) + <%OFFSET%>];\n"
   std::string reduce_sTemplate = "integratedSample<%NUM%> += buffer[(sample + <%OFFSET%>) + threshold];\n"
     "buffer[sample + <%OFFSET%>] = integratedSample<%NUM%>;\n";
   // End kernel's template
 
   std::string * defs_s = new std::string();
+  std::string * load_s = new std::string();
   std::string * reduce_s = new std::string();
 
   for ( unsigned int sample = 0; sample < conf.getNrSamplesPerThread(); sample++ ) {
@@ -133,6 +136,15 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
 
     temp = isa::utils::replace(&defs_sTemplate, "<%NUM%>", sample_s);
     defs_s->append(*temp);
+    delete temp;
+    temp = isa::utils::replace(&load_sTemplate, "<%NUM%>", sample_s);
+    if ( sample == 0 ) {
+      std::string empty_s("");
+      temp = isa::utils::replace(temp, " + <%OFFSET%>", empty_s, true);
+    } else {
+      temp = isa::utils::replace(temp, "<%OFFSET%>", offset_s, true);
+    }
+    load_s->append(*temp);
     delete temp;
     temp = isa::utils::replace(&reduce_sTemplate, "<%NUM%>", sample_s);
     if ( sample == 0 ) {
@@ -145,6 +157,7 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
     delete temp;
   }
   code = isa::utils::replace(code, "<%DEFS%>", *defs_s, true);
+  code = isa::utils::replace(code, "<%LOAD%>", *load_s, true);
   code = isa::utils::replace(code, "<%REDUCE%>", *reduce_s, true);
   delete defs_s;
   delete reduce_s;
