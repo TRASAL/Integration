@@ -95,7 +95,7 @@ int main(int argc, char * argv[]) {
 
 	for ( unsigned int samples = minThreads; samples <= maxThreads; samples++) {
     conf.setNrSamplesPerBlock(samples);
-    if ( conf.getNrSamplesPerBlock % vectorWidth != 0 ) {
+    if ( conf.getNrSamplesPerBlock() % vectorWidth != 0 ) {
       continue;
     }
 
