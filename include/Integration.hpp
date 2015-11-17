@@ -101,7 +101,7 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
     "}\n"
     "barrier(CLK_LOCAL_MEM_FENCE);\n"
     "// Reduce\n"
-    "unsigned int threshold = " + isa::utils::toString(conf.getNrSamplesPerBlock() / 2) + ";\n"
+    "unsigned int threshold = " + isa::utils::toString(integration / 2) + ";\n"
     "for ( unsigned int sample = get_local_id(0); threshold > 0; threshold /= 2 ) {\n"
     "if ( sample < threshold ) {\n"
     "<%REDUCE%>"
