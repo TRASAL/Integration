@@ -104,6 +104,8 @@ int main(int argc, char * argv[]) {
       conf.setNrSamplesPerThread(samplesPerThread);
       if ( (observation.getNrSamplesPerSecond() % (integration * conf.getNrSamplesPerThread())) != 0 ) {
         continue;
+      } else if ( (observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread()) % conf.getNrSamplesPerBlock() != 0 ) {
+        continue;
       }
 
       // Generate kernel
