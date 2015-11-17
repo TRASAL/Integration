@@ -85,12 +85,21 @@ int main(int argc, char *argv[]) {
 
 	srand(time(0));
   for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+    if ( printResults ) {
+      std::cout << dm << ": ";
+    }
     for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
       if ( random ) {
         input[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(dataType))) + sample] = rand() % 10;
       } else {
         input[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(dataType))) + sample] = sample % 10;
       }
+      if ( printResults ) {
+        std::cout << input[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(dataType))) + sample] << " ";
+      }
+    }
+    if ( printResults ) {
+      std::cout << std::endl;
     }
   }
 
