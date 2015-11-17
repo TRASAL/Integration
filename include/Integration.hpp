@@ -116,8 +116,7 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
   } else {
     *code += "output[(dm * " + isa::utils::toString(isa::utils::pad(observation.getNrSamplesPerSecond() / integration, padding / sizeof(T))) + ") + ((get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ") + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] / " + isa::utils::toString(integration) + ";\n";
   }
-  *code += "<%STORE%>"
-    "}\n"
+  *code += "}\n"
     "}\n";
   std::string defs_sTemplate = dataName + " integratedSample<%NUM%> = 0;\n";
   std::string reduce_sTemplate = "integratedSample<%NUM%> += buffer[(sample + <%OFFSET%>) + threshold];\n"
