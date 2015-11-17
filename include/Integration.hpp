@@ -129,7 +129,7 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
 
   for ( unsigned int sample = 0; sample < conf.getNrSamplesPerThread(); sample++ ) {
     std::string sample_s = isa::utils::toString(sample);
-    std::string offset_s = isa::utils::replace(sample * integration);
+    std::string offset_s = isa::utils::toString(sample * integration);
     std::string * temp = 0;
 
     temp = isa::utils::replace(defs_sTemplate, "<%NUM%>", sample_s);
