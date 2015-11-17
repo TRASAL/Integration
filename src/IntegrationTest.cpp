@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     std::cout << *code << std::endl;
   }
 	try {
-    kernel = isa::OpenCL::compile("integrationSamplesDMs" + isa::utils::toString(integration), *code, "-cl-mad-enable -Wall", *clContext, clDevices->at(clDeviceID));
+    kernel = isa::OpenCL::compile("integrationSamplesDMs" + isa::utils::toString(integration), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
 	} catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
 		return 1;
