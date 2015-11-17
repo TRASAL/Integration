@@ -18,7 +18,7 @@ namespace PulsarSearch {
 
 integrationSamplesDMsConf::integrationSamplesDMsConf() {}
 
-integrationSampleDMsConf::~integrationSamplesDMsConf() {}
+integrationSamplesDMsConf::~integrationSamplesDMsConf() {}
 
 std::string integrationSamplesDMsConf::print() const {
   return isa::utils::toString(nrSamplesPerBlock) + " " + isa::utils::toString(nrSamplesPerThread);
