@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
   unsigned int integration = 0;
   bool printCode = false;
   bool printResults = false;
+  bool random = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
   long long unsigned int wrongSamples = 0;
@@ -43,6 +44,7 @@ int main(int argc, char *argv[]) {
     isa::utils::ArgumentList args(argc, argv);
     printCode = args.getSwitch("-print_code");
     printResults = args.getSwitch("-print_results");
+    random = args.getSwitch("-random");
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     padding = args.getSwitchArgument< unsigned int >("-padding");
@@ -55,7 +57,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] -opencl_platform ... -opencl_device ... -padding ... -integration ... -sb ... -st ... -samples ... -dms ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] [-random] -opencl_platform ... -opencl_device ... -padding ... -integration ... -sb ... -st ... -samples ... -dms ..." << std::endl;
 		return 1;
 	}
 
@@ -84,7 +86,11 @@ int main(int argc, char *argv[]) {
 	srand(time(0));
   for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
     for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-      input[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(dataType))) + sample] = rand() % 10;
+      if ( random ) {
+        input[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(dataType))) + sample] = rand() % 10;
+      } else {
+        input[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(dataType))) + sample] = sample % 10;
+      }
     }
   }
 
