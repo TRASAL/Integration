@@ -85,7 +85,7 @@ int main(int argc, char * argv[]) {
   cl::Buffer output_d;
 
   try {
-    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), input_d, input.size(), output_d, output.size());
+    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input.size(), &output_d, output.size());
   } catch ( cl::Error & err ) {
     std::cerr << err.what() << std::endl;
     return -1;
@@ -118,7 +118,7 @@ int main(int argc, char * argv[]) {
         clQueues = new std::vector< std::vector < cl::CommandQueue > >();
         isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
         try {
-          initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), input_d, input.size(), output_d, output.size());
+          initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input.size(), &output_d, output.size());
         } catch ( cl::Error & err ) {
           std::cerr << "Error in memory allocation: ";
           std::cerr << isa::utils::toString(err.err()) << "." << std::endl;
@@ -127,7 +127,7 @@ int main(int argc, char * argv[]) {
         reInit = false;
       }
       try {
-        kernel = isa::OpenCL::compile("integrationSamplesDMs" + isa::utils::toString(integration), *code, "-cl-mad-enable -Wall", *clContext, clDevices->at(clDeviceID));
+        kernel = isa::OpenCL::compile("integrationSamplesDMs" + isa::utils::toString(integration), *code, "-cl-mad-enable -Wall", clContext, clDevices->at(clDeviceID));
       } catch ( isa::OpenCL::OpenCLError & err ) {
         std::cerr << err.what() << std::endl;
         delete code;
