@@ -39,7 +39,6 @@ int main(int argc, char * argv[]) {
 	unsigned int nrIterations = 0;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
-	unsigned int minThreads = 0;
   unsigned int maxThreads = 0;
   unsigned int maxItems = 0;
   unsigned int vectorWidth = 0;
@@ -55,14 +54,13 @@ int main(int argc, char * argv[]) {
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
 		padding = args.getSwitchArgument< unsigned int >("-padding");
 		integration = args.getSwitchArgument< unsigned int >("-integration");
-		minThreads = args.getSwitchArgument< unsigned int >("-min_threads");
 		maxThreads = args.getSwitchArgument< unsigned int >("-max_threads");
 		maxItems = args.getSwitchArgument< unsigned int >("-max_items");
     vectorWidth = args.getSwitchArgument< unsigned int >("-vector");
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... -padding ... -integration ... -min_threads ... -max_threads ... -max_items ... -vector ... -samples ... -dms ... " << std::endl;
+		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... -padding ... -integration ... -max_threads ... -max_items ... -vector ... -samples ... -dms ... " << std::endl;
 		return 1;
 	} catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -94,7 +92,7 @@ int main(int argc, char * argv[]) {
 	std::cout << std::fixed << std::endl;
 	std::cout << "# nrDMs nrSamples integration samplesPerBlock samplesPerThread GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
 
-	for ( unsigned int samples = minThreads; samples <= maxThreads; samples++) {
+	for ( unsigned int samples = integration; samples <= maxThreads; samples++) {
     conf.setNrSamplesPerBlock(samples);
     if ( conf.getNrSamplesPerBlock() % vectorWidth != 0 ) {
       continue;
