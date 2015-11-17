@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <exception>
+#include <iomanip>
 
 #include <configuration.hpp>
 
