@@ -132,10 +132,10 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
     std::string offset_s = isa::utils::toString(sample * integration);
     std::string * temp = 0;
 
-    temp = isa::utils::replace(defs_sTemplate, "<%NUM%>", sample_s);
+    temp = isa::utils::replace(&defs_sTemplate, "<%NUM%>", sample_s);
     defs_s->append(*temp);
     delete temp;
-    temp = isa::utils::replace(reduce_sTemplate, "<%NUM%>", sample_s);
+    temp = isa::utils::replace(&reduce_sTemplate, "<%NUM%>", sample_s);
     if ( sample == 0 ) {
       std::string empty_s("");
       temp = isa::utils::replace(temp, " + <%OFFSET%>", empty_s, true);
