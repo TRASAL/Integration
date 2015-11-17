@@ -102,6 +102,9 @@ int main(int argc, char *argv[]) {
       std::cout << std::endl;
     }
   }
+  if ( printResults ) {
+    std::cout << std::endl;
+  }
 
   // Copy data structures to device
   try {
@@ -130,8 +133,8 @@ int main(int argc, char *argv[]) {
     cl::NDRange local(conf.getNrSamplesPerBlock(), 1);
 
     std::cout << std::endl;
-    std::cout << observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread() << " " << observation.getNrDMs() << std::endl;
-    std::cout << conf.getNrSamplesPerBlock() << " " << 1 << std::endl;
+    std::cout << "Global: " << observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread() << " " << observation.getNrDMs() << std::endl;
+    std::cout << "Local: " << conf.getNrSamplesPerBlock() << " " << 1 << std::endl;
     std::cout << std::endl;
 
     kernel->setArg(0, input_d);
