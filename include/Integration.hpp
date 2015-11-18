@@ -25,10 +25,10 @@
 
 namespace PulsarSearch {
 
-class integrationSamplesDMsConf {
+class integrationDMsSamplesConf {
 public:
-  integrationSamplesDMsConf();
-  ~integrationSamplesDMsConf();
+  integrationDMsSamplesConf();
+  ~integrationDMsSamplesConf();
   // Get
   unsigned int getNrSamplesPerBlock() const;
   unsigned int getNrSamplesPerThread() const;
@@ -42,34 +42,34 @@ private:
   unsigned int nrSamplesPerThread;
 };
 
-typedef std::map< std::string, std::map < unsigned int, std::map< unsigned int, PulsarSearch::integrationSamplesDMsConf > > > tunedIntegrationSamplesDMsConf;
+typedef std::map< std::string, std::map < unsigned int, std::map< unsigned int, PulsarSearch::integrationDMsSamplesConf > > > tunedIntegrationDMsSamplesConf;
 
 // Sequential
-template< typename T > void integrationSamplesDMs(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output);
+template< typename T > void integrationDMsSamples(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output);
 // OpenCL
-template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integrationSamplesDMsConf & conf, const AstroData::Observation & observation, const std::string & inputDataName, const unsigned int integration, const unsigned int padding);
+template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationDMsSamplesConf & conf, const AstroData::Observation & observation, const std::string & inputDataName, const unsigned int integration, const unsigned int padding);
 // Read configuration files
-void readTunedIntegrationSamplesDMsConf(tunedIntegrationSamplesDMsConf & tunedConf, const std::string & confFilename);
+void readTunedIntegrationDMsSamplesConf(tunedIntegrationDMsSamplesConf & tunedConf, const std::string & confFilename);
 
 
 // Implementations
-inline unsigned int integrationSamplesDMsConf::getNrSamplesPerBlock() const {
+inline unsigned int integrationDMsSamplesConf::getNrSamplesPerBlock() const {
   return nrSamplesPerBlock;
 }
 
-inline unsigned int integrationSamplesDMsConf::getNrSamplesPerThread() const {
+inline unsigned int integrationDMsSamplesConf::getNrSamplesPerThread() const {
   return nrSamplesPerThread;
 }
 
-inline void integrationSamplesDMsConf::setNrSamplesPerBlock(unsigned int samples) {
+inline void integrationDMsSamplesConf::setNrSamplesPerBlock(unsigned int samples) {
   nrSamplesPerBlock = samples;
 }
 
-inline void integrationSamplesDMsConf::setNrSamplesPerThread(unsigned int samples) {
+inline void integrationDMsSamplesConf::setNrSamplesPerThread(unsigned int samples) {
   nrSamplesPerThread = samples;
 }
 
-template< typename T > void integrationSamplesDMs(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output) {
+template< typename T > void integrationDMsSamples(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output) {
   for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
     for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample += integration ) {
       T integratedSample = 0;
@@ -82,11 +82,11 @@ template< typename T > void integrationSamplesDMs(const AstroData::Observation &
   }
 }
 
-template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integrationSamplesDMsConf & conf, const AstroData::Observation & observation, const std::string & dataName, const unsigned int integration, const unsigned int padding) {
+template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationDMsSamplesConf & conf, const AstroData::Observation & observation, const std::string & dataName, const unsigned int integration, const unsigned int padding) {
   std::string * code = new std::string();
 
   // Begin kernel's template
-  *code = "__kernel void integrationSamplesDMs" + isa::utils::toString(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
+  *code = "__kernel void integrationDMsSamples" + isa::utils::toString(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
     "unsigned int dm = get_group_id(1);\n"
     "__local " + dataName + " buffer[" + isa::utils::toString(integration * conf.getNrSamplesPerThread()) + "];\n"
     "<%DEFS%>"

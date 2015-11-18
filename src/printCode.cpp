@@ -25,7 +25,7 @@
 int main(int argc, char * argv[]) {
   unsigned int padding = 0;
   unsigned int integration = 0;
-  PulsarSearch::integrationSamplesDMsConf conf;
+  PulsarSearch::integrationDMsSamplesConf conf;
   AstroData::Observation observation;
 
   try {
@@ -45,7 +45,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+  std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
   std::cout << *code << std::endl;
 
   return 0;

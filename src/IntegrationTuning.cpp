@@ -43,7 +43,7 @@ int main(int argc, char * argv[]) {
   unsigned int maxItems = 0;
   unsigned int vectorWidth = 0;
   AstroData::Observation observation;
-  PulsarSearch::integrationSamplesDMsConf conf;
+  PulsarSearch::integrationDMsSamplesConf conf;
   cl::Event event;
 
 	try {
@@ -112,7 +112,7 @@ int main(int argc, char * argv[]) {
       isa::utils::Timer timer;
       cl::Kernel * kernel;
 
-      std::string * code = PulsarSearch::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+      std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
       if ( reInit ) {
         delete clQueues;
         clQueues = new std::vector< std::vector < cl::CommandQueue > >();
@@ -127,7 +127,7 @@ int main(int argc, char * argv[]) {
         reInit = false;
       }
       try {
-        kernel = isa::OpenCL::compile("integrationSamplesDMs" + isa::utils::toString(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+        kernel = isa::OpenCL::compile("integrationDMsSamples" + isa::utils::toString(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
       } catch ( isa::OpenCL::OpenCLError & err ) {
         std::cerr << err.what() << std::endl;
         delete code;

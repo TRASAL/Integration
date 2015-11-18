@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
   long long unsigned int wrongSamples = 0;
-  PulsarSearch::integrationSamplesDMsConf conf;
+  PulsarSearch::integrationDMsSamplesConf conf;
   AstroData::Observation observation;
 
   try {
@@ -115,13 +115,13 @@ int main(int argc, char *argv[]) {
   }
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+  std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
   cl::Kernel * kernel;
   if ( printCode ) {
     std::cout << *code << std::endl;
   }
 	try {
-    kernel = isa::OpenCL::compile("integrationSamplesDMs" + isa::utils::toString(integration), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+    kernel = isa::OpenCL::compile("integrationDMsSamples" + isa::utils::toString(integration), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
 	} catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
 		return 1;
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
     kernel->setArg(0, input_d);
     kernel->setArg(1, output_d);
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
-    PulsarSearch::integrationSamplesDMs(observation, integration, padding, input, output_control);
+    PulsarSearch::integrationDMsSamples(observation, integration, padding, input, output_control);
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(dataType), reinterpret_cast< void * >(output.data()));
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error kernel execution: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;

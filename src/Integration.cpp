@@ -16,15 +16,15 @@
 
 namespace PulsarSearch {
 
-integrationSamplesDMsConf::integrationSamplesDMsConf() {}
+integrationDMsSamplesConf::integrationDMsSamplesConf() {}
 
-integrationSamplesDMsConf::~integrationSamplesDMsConf() {}
+integrationDMsSamplesConf::~integrationDMsSamplesConf() {}
 
-std::string integrationSamplesDMsConf::print() const {
+std::string integrationDMsSamplesConf::print() const {
   return isa::utils::toString(nrSamplesPerBlock) + " " + isa::utils::toString(nrSamplesPerThread);
 }
 
-void readTunedIntegrationSamplesDMsConf(tunedIntegrationSamplesDMsConf & tunedConf, const std::string & confFilename) {
+void readTunedIntegrationDMsSamplesConf(tunedIntegrationDMsSamplesConf & tunedConf, const std::string & confFilename) {
 	std::string temp;
 	std::ifstream confFile(confFilename);
 
@@ -38,7 +38,7 @@ void readTunedIntegrationSamplesDMsConf(tunedIntegrationSamplesDMsConf & tunedCo
 		std::string deviceName;
 		unsigned int nrSamples = 0;
 		unsigned int integration = 0;
-    PulsarSearch::integrationSamplesDMsConf parameters;
+    PulsarSearch::integrationDMsSamplesConf parameters;
 
 		splitPoint = temp.find(" ");
 		deviceName = temp.substr(0, splitPoint);
@@ -55,14 +55,14 @@ void readTunedIntegrationSamplesDMsConf(tunedIntegrationSamplesDMsConf & tunedCo
 		splitPoint = temp.find(" ");
 		parameters.setNrSamplesPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		if ( tunedConf.count(deviceName) == 0 ) {
-      std::map< unsigned int, std::map< unsigned int, PulsarSearch::integrationSamplesDMsConf > > externalContainer;
-      std::map< unsigned int, PulsarSearch::integrationSamplesDMsConf > internalContainer;
+      std::map< unsigned int, std::map< unsigned int, PulsarSearch::integrationDMsSamplesConf > > externalContainer;
+      std::map< unsigned int, PulsarSearch::integrationDMsSamplesConf > internalContainer;
 
 			internalContainer.insert(std::make_pair(integration, parameters));
 			externalContainer.insert(std::make_pair(nrSamples, internalContainer));
 			tunedConf.insert(std::make_pair(deviceName, externalContainer));
 		} else if ( tunedConf[deviceName].count(nrSamples) == 0 ) {
-      std::map< unsigned int, PulsarSearch::integrationSamplesDMsConf > internalContainer;
+      std::map< unsigned int, PulsarSearch::integrationDMsSamplesConf > internalContainer;
 
 			internalContainer.insert(std::make_pair(integration, parameters));
 			tunedConf[deviceName].insert(std::make_pair(nrSamples, internalContainer));
