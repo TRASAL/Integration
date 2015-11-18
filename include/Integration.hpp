@@ -47,7 +47,7 @@ typedef std::map< std::string, std::map < unsigned int, std::map< unsigned int, 
 // Sequential
 template< typename T > void integrationDMsSamples(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output);
 // OpenCL
-template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationDMsSamplesConf & conf, const AstroData::Observation & observation, const std::string & inputDataName, const unsigned int integration, const unsigned int padding);
+template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationDMsSamplesConf & conf, const unsigned int nrSamples, const std::string & inputDataName, const unsigned int integration, const unsigned int padding);
 // Read configuration files
 void readTunedIntegrationDMsSamplesConf(tunedIntegrationDMsSamplesConf & tunedConf, const std::string & confFilename);
 
@@ -82,7 +82,7 @@ template< typename T > void integrationDMsSamples(const AstroData::Observation &
   }
 }
 
-template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationDMsSamplesConf & conf, const AstroData::Observation & observation, const std::string & dataName, const unsigned int integration, const unsigned int padding) {
+template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationDMsSamplesConf & conf, const unsigned int nrSamples, const std::string & dataName, const unsigned int integration, const unsigned int padding) {
   std::string * code = new std::string();
 
   // Begin kernel's template
@@ -95,7 +95,7 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
     "unsigned int inLocalMemory = get_local_id(0);\n"
     "unsigned int inGlobalMemory = get_local_id(0) + (get_group_id(0) * " + isa::utils::toString(integration * conf.getNrSamplesPerThread()) + ");\n"
     "while ( inLocalMemory < " + isa::utils::toString(integration * conf.getNrSamplesPerThread()) + " ) {\n"
-    "buffer[inLocalMemory] = input[(dm * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond(padding / sizeof(T))) + ") + inGlobalMemory];\n"
+    "buffer[inLocalMemory] = input[(dm * " + isa::utils::toString(isa::utils::pad(nrSamples, padding / sizeof(T))) + ") + inGlobalMemory];\n"
     "inGlobalMemory += " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ";\n"
     "inLocalMemory += " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ";\n"
     "}\n"
@@ -113,11 +113,11 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
     "}\n"
     "if ( get_local_id(0) < " + isa::utils::toString(conf.getNrSamplesPerThread()) + " ) {\n";
   if ( dataName == "float" ) {
-    *code += "output[(dm * " + isa::utils::toString(isa::utils::pad(observation.getNrSamplesPerSecond() / integration, padding / sizeof(T))) + ") + ((get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ") + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0f / integration) + "f;\n";
+    *code += "output[(dm * " + isa::utils::toString(isa::utils::pad(nrSamples / integration, padding / sizeof(T))) + ") + ((get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ") + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0f / integration) + "f;\n";
   } else if ( dataName == "double" ) {
-    *code += "output[(dm * " + isa::utils::toString(isa::utils::pad(observation.getNrSamplesPerSecond() / integration, padding / sizeof(T))) + ") + ((get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ") + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0 / integration) + ";\n";
+    *code += "output[(dm * " + isa::utils::toString(isa::utils::pad(nrSamples / integration, padding / sizeof(T))) + ") + ((get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ") + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0 / integration) + ";\n";
   } else {
-    *code += "output[(dm * " + isa::utils::toString(isa::utils::pad(observation.getNrSamplesPerSecond() / integration, padding / sizeof(T))) + ") + ((get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ") + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] / " + isa::utils::toString(integration) + ";\n";
+    *code += "output[(dm * " + isa::utils::toString(isa::utils::pad(nrSamples / integration, padding / sizeof(T))) + ") + ((get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ") + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] / " + isa::utils::toString(integration) + ";\n";
   }
   *code += "}\n"
     "}\n";

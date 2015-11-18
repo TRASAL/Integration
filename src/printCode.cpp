@@ -35,17 +35,16 @@ int main(int argc, char * argv[]) {
     conf.setNrSamplesPerBlock(args.getSwitchArgument< unsigned int >("-sb"));
 		conf.setNrSamplesPerThread(args.getSwitchArgument< unsigned int >("-st"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
-    observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
 	} catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " -padding ... -integration ... -sb ... -st ... -samples ... -dms ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " -padding ... -integration ... -sb ... -st ... -samples ..." << std::endl;
 		return 1;
 	}
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
+  std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation.getNrSamplesPerSecond(), dataName, integration, padding);
   std::cout << *code << std::endl;
 
   return 0;

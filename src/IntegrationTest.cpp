@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
   }
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
+  std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation.getNrSamplesPerSecond(), dataName, integration, padding);
   cl::Kernel * kernel;
   if ( printCode ) {
     std::cout << *code << std::endl;

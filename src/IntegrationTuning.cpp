@@ -112,7 +112,7 @@ int main(int argc, char * argv[]) {
       isa::utils::Timer timer;
       cl::Kernel * kernel;
 
-      std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
+      std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation.getNrSamplesPerSecond(), dataName, integration, padding);
       if ( reInit ) {
         delete clQueues;
         clQueues = new std::vector< std::vector < cl::CommandQueue > >();
