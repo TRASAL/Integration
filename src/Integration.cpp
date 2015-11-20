@@ -52,8 +52,8 @@ void readTunedIntegrationDMsSamplesConf(tunedIntegrationDMsSamplesConf & tunedCo
 		splitPoint = temp.find(" ");
 		parameters.setNrSamplesPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
-		parameters.setNrSamplesPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		parameters.setNrSamplesPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr));
+
 		if ( tunedConf.count(deviceName) == 0 ) {
       std::map< unsigned int, std::map< unsigned int, PulsarSearch::integrationDMsSamplesConf > > externalContainer;
       std::map< unsigned int, PulsarSearch::integrationDMsSamplesConf > internalContainer;
