@@ -135,7 +135,7 @@ int main(int argc, char * argv[]) {
       }
       delete code;
 
-      cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread(), observation.getNrDMs());
+      cl::NDRange global(conf.getNrSamplesPerBlock() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrSamplesPerThread()), observation.getNrDMs());
       cl::NDRange local(conf.getNrSamplesPerBlock(), 1);
       kernel->setArg(0, input_d);
       kernel->setArg(1, output_d);
