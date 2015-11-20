@@ -122,7 +122,13 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
   *code += "}\n"
     "}\n";
   std::string defs_sTemplate = dataName + " integratedSample<%NUM%> = 0;\n";
-  std::string load_sTemplate = "integratedSample<%NUM%> = buffer[get_local_id(0) + <%OFFSET%>];\n";
+  std::string load_sTemplate;
+  if ( (integration % 2) == 0 ) {
+    load_sTemplate = "integratedSample<%NUM%> = buffer[get_local_id(0) + <%OFFSET%>];\n";
+  } else {
+    load_sTemplate = "integratedSample<%NUM%> = buffer[get_local_id(0) + <%OFFSET%>];\n"
+      "integratedSample<%NUM%> += buffer[" + isa::utils::toString(integration - 1) + " + <%OFFSET%>];\n";
+  }
   std::string reduce_sTemplate = "integratedSample<%NUM%> += buffer[(sample + <%OFFSET%>) + threshold];\n"
     "buffer[sample + <%OFFSET%>] = integratedSample<%NUM%>;\n";
   // End kernel's template
