@@ -106,7 +106,7 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
     "}\n"
     "barrier(CLK_LOCAL_MEM_FENCE);\n"
     "}\n"
-    "inGlobalMemory = (dm * " + isa::utils::toString(isa::utils::pad(nrSamples, padding / sizeof(T))) + ") + (get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ");\n"
+    "inGlobalMemory = (dm * " + isa::utils::toString(isa::utils::pad(nrSamples / integration, padding / sizeof(T))) + ") + (get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ");\n"
     "if ( get_local_id(0) < " + isa::utils::toString(conf.getNrSamplesPerThread()) + " ) {\n";
   if ( dataName == "float" ) {
     *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0f / integration) + "f;\n";
