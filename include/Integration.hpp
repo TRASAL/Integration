@@ -109,11 +109,11 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
     "inGlobalMemory = (dm * " + isa::utils::toString(isa::utils::pad(nrSamples / integration, padding / sizeof(T))) + ") + (get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ");\n"
     "if ( get_local_id(0) < " + isa::utils::toString(conf.getNrSamplesPerThread()) + " ) {\n";
   if ( dataName == "float" ) {
-    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0f / integration) + "f;\n";
+    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + isa::utils::toString(conf.getNrSamplesPerBlock()) + "] * " + isa::utils::toString(1.0f / integration) + "f;\n";
   } else if ( dataName == "double" ) {
-    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0 / integration) + ";\n";
+    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + isa::utils::toString(conf.getNrSamplesPerBlock()) + "] * " + isa::utils::toString(1.0 / integration) + ";\n";
   } else {
-    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] / " + isa::utils::toString(integration) + ";\n";
+    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + isa::utils::toString(conf.getNrSamplesPerBlock()) + "] / " + isa::utils::toString(integration) + ";\n";
   }
   *code += "}\n"
     "}\n";
