@@ -88,52 +88,44 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
   // Begin kernel's template
   *code = "__kernel void integrationDMsSamples" + isa::utils::toString(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
     "unsigned int dm = get_group_id(1);\n"
-    "__local " + dataName + " buffer[" + isa::utils::toString(integration * conf.getNrSamplesPerThread()) + "];\n"
+    "__local " + dataName + " buffer[" + isa::utils::toString(conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread()) + "];\n"
+    "unsigned int inGlobalMemory = (dm * " + isa::utils::toString(isa::utils::pad(nrSamples, padding / sizeof(T))) + ") + (get_group_id(0) * " + isa::utils::toString(integration * conf.getNrSamplesPerThread()) + ");\n"
     "<%DEFS%>"
     "\n"
-    "// Load local memory\n"
-    "unsigned int inLocalMemory = get_local_id(0);\n"
-    "unsigned int inGlobalMemory = get_local_id(0) + (get_group_id(0) * " + isa::utils::toString(integration * conf.getNrSamplesPerThread()) + ");\n"
-    "while ( inLocalMemory < " + isa::utils::toString(integration * conf.getNrSamplesPerThread()) + " ) {\n"
-    "buffer[inLocalMemory] = input[(dm * " + isa::utils::toString(isa::utils::pad(nrSamples, padding / sizeof(T))) + ") + inGlobalMemory];\n"
-    "inGlobalMemory += " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ";\n"
-    "inLocalMemory += " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ";\n"
+    "// First computing phase\n"
+    "for ( unsigned int sample = get_local_id(0); sample < " + isa::utils::toString(integration) + "; sample++ ) {\n"
+    "<%SUM%>"
     "}\n"
-    "if ( get_local_id(0) < " + isa::utils::toString(integration / 2) + " ) {\n"
     "<%LOAD%>"
-    "}\n"
     "barrier(CLK_LOCAL_MEM_FENCE);\n"
     "// Reduce\n"
-    "unsigned int threshold = " + isa::utils::toString(integration / 2) + ";\n"
+    "unsigned int threshold = " + isa::utils::toString(conf.getNrSamplesPerBlock() / 2) + ";\n"
     "for ( unsigned int sample = get_local_id(0); threshold > 0; threshold /= 2 ) {\n"
     "if ( sample < threshold ) {\n"
     "<%REDUCE%>"
     "}\n"
     "barrier(CLK_LOCAL_MEM_FENCE);\n"
     "}\n"
+    "unsigned int inGlobalMemory = (dm * " + isa::utils::toString(isa::utils::pad(nrSamples, padding / sizeof(T))) + ") + (get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ");\n"
     "if ( get_local_id(0) < " + isa::utils::toString(conf.getNrSamplesPerThread()) + " ) {\n";
   if ( dataName == "float" ) {
-    *code += "output[(dm * " + isa::utils::toString(isa::utils::pad(nrSamples / integration, padding / sizeof(T))) + ") + ((get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ") + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0f / integration) + "f;\n";
+    *code += "output[inGlobalMemory + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0f / integration) + "f;\n";
   } else if ( dataName == "double" ) {
-    *code += "output[(dm * " + isa::utils::toString(isa::utils::pad(nrSamples / integration, padding / sizeof(T))) + ") + ((get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ") + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0 / integration) + ";\n";
+    *code += "output[inGlobalMemory + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] * " + isa::utils::toString(1.0 / integration) + ";\n";
   } else {
-    *code += "output[(dm * " + isa::utils::toString(isa::utils::pad(nrSamples / integration, padding / sizeof(T))) + ") + ((get_group_id(0) * " + isa::utils::toString(conf.getNrSamplesPerThread()) + ") + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] / " + isa::utils::toString(integration) + ";\n";
+    *code += "output[inGlobalMemory + get_local_id(0))] = buffer[get_local_id(0) * " + isa::utils::toString(integration) + "] / " + isa::utils::toString(integration) + ";\n";
   }
   *code += "}\n"
     "}\n";
   std::string defs_sTemplate = dataName + " integratedSample<%NUM%> = 0;\n";
-  std::string load_sTemplate;
-  if ( (integration % 2) == 0 ) {
-    load_sTemplate = "integratedSample<%NUM%> = buffer[get_local_id(0) + <%OFFSET%>];\n";
-  } else {
-    load_sTemplate = "integratedSample<%NUM%> = buffer[get_local_id(0) + <%OFFSET%>];\n"
-      "integratedSample<%NUM%> += buffer[" + isa::utils::toString(integration - 1) + " + <%OFFSET%>];\n";
-  }
+  std::string sum_sTemplate = "integratedSample<%NUM%> += input[inGlobalMemory + sample + <%OFFSET%>];\n";
+  std::string load_sTemplate = "buffer[get_local_id(0) + <%OFFSET%>] = integratedSample<%NUM%>;\n";
   std::string reduce_sTemplate = "integratedSample<%NUM%> += buffer[(sample + <%OFFSET%>) + threshold];\n"
     "buffer[sample + <%OFFSET%>] = integratedSample<%NUM%>;\n";
   // End kernel's template
 
   std::string * defs_s = new std::string();
+  std::string * sum_s = new std::string();
   std::string * load_s = new std::string();
   std::string * reduce_s = new std::string();
 
@@ -144,6 +136,15 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
 
     temp = isa::utils::replace(&defs_sTemplate, "<%NUM%>", sample_s);
     defs_s->append(*temp);
+    delete temp;
+    temp = isa::utils::replace(&sum_sTemplate, "<%NUM%>", sample_s);
+    if ( sample == 0 ) {
+      std::string empty_s("");
+      temp = isa::utils::replace(temp, " + <%OFFSET%>", empty_s, true);
+    } else {
+      temp = isa::utils::replace(temp, "<%OFFSET%>", offset_s, true);
+    }
+    sum_s->append(*temp);
     delete temp;
     temp = isa::utils::replace(&load_sTemplate, "<%NUM%>", sample_s);
     if ( sample == 0 ) {
@@ -165,9 +166,12 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
     delete temp;
   }
   code = isa::utils::replace(code, "<%DEFS%>", *defs_s, true);
+  code = isa::utils::replace(code, "<%SUM%>", *sum_s, true);
   code = isa::utils::replace(code, "<%LOAD%>", *load_s, true);
   code = isa::utils::replace(code, "<%REDUCE%>", *reduce_s, true);
   delete defs_s;
+  delete sum_s;
+  delete load_s;
   delete reduce_s;
 
   return code;
