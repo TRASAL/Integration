@@ -132,6 +132,7 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
   for ( unsigned int sample = 0; sample < conf.getNrSamplesPerThread(); sample++ ) {
     std::string sample_s = isa::utils::toString(sample);
     std::string offset_s = isa::utils::toString(sample * integration);
+    std::string localOffset_s = isa::utils::toString(sample * conf.getNrSamplesPerBlock());
     std::string * temp = 0;
 
     temp = isa::utils::replace(&defs_sTemplate, "<%NUM%>", sample_s);
@@ -151,7 +152,7 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
       std::string empty_s("");
       temp = isa::utils::replace(temp, " + <%OFFSET%>", empty_s, true);
     } else {
-      temp = isa::utils::replace(temp, "<%OFFSET%>", offset_s, true);
+      temp = isa::utils::replace(temp, "<%OFFSET%>", localOffset_s, true);
     }
     load_s->append(*temp);
     delete temp;
@@ -160,7 +161,7 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
       std::string empty_s("");
       temp = isa::utils::replace(temp, " + <%OFFSET%>", empty_s, true);
     } else {
-      temp = isa::utils::replace(temp, "<%OFFSET%>", offset_s, true);
+      temp = isa::utils::replace(temp, "<%OFFSET%>", localOffset_s, true);
     }
     reduce_s->append(*temp);
     delete temp;
