@@ -93,7 +93,7 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
     "<%DEFS%>"
     "\n"
     "// First computing phase\n"
-    "for ( unsigned int sample = get_local_id(0); sample < " + isa::utils::toString(integration) + "; sample++ ) {\n"
+    "for ( unsigned int sample = get_local_id(0); sample < " + isa::utils::toString(integration) + "; sample += " + isa::utils::toString(conf.getNrSamplesPerBlock()) + " ) {\n"
     "<%SUM%>"
     "}\n"
     "<%LOAD%>"
