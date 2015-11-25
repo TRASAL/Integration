@@ -211,11 +211,11 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
   std::string sum_sTemplate = "integratedSample<%NUM%> += input[(sample * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)];\n";
   std::string store_sTemplate;
   if ( dataName == "float" ) {
-    store_sTemplate += "output[(firstSample * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> * " + isa::utils::toString(1.0f / integration) + "f;\n";
+    store_sTemplate += "output[(get_group_id(1) * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> * " + isa::utils::toString(1.0f / integration) + "f;\n";
   } else if ( dataName == "double" ) {
-    store_sTemplate += "output[(firstSample * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> * " + isa::utils::toString(1.0 / integration) + ";\n";
+    store_sTemplate += "output[(get_group_id(1) * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> * " + isa::utils::toString(1.0 / integration) + ";\n";
   } else {
-    store_sTemplate += "output[(firstSample * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> / " + isa::utils::toString(integration) + ";\n";
+    store_sTemplate += "output[(get_group_id(1) * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> / " + isa::utils::toString(integration) + ";\n";
   }
   // End kernel's template
 
