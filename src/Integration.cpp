@@ -21,7 +21,7 @@ integrationConf::integrationConf() : nrThreadsD0(0), nrItemsD0(0) {}
 integrationConf::~integrationConf() {}
 
 std::string integrationConf::print() const {
-  return isa::utils::toString(nrSamplesPerBlock) + " " + isa::utils::toString(nrSamplesPerThread);
+  return isa::utils::toString(nrThreadsD0) + " " + isa::utils::toString(nrItemsD0);
 }
 
 void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::string & confFilename) {
@@ -52,9 +52,9 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
 		integration = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters->setNrSamplesPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		parameters->setNrThreadsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
-		parameters->setNrSamplesPerThread(isa::utils::castToType< std::string, unsigned int >(temp));
+		parameters->setNrItemsD0(isa::utils::castToType< std::string, unsigned int >(temp));
 
 		if ( tunedConf.count(deviceName) == 0 ) {
       std::map< unsigned int, std::map< unsigned int, PulsarSearch::integrationConf * > * >  * externalContainer = new std::map< unsigned int, std::map< unsigned int, PulsarSearch::integrationConf * > * >();
@@ -63,7 +63,7 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
 			internalContainer->insert(std::make_pair(integration, parameters));
 			externalContainer->insert(std::make_pair(dim0, internalContainer));
 			tunedConf.insert(std::make_pair(deviceName, externalContainer));
-		} else if ( tunedConf[deviceName].count(dim0) == 0 ) {
+		} else if ( tunedConf[deviceName]->count(dim0) == 0 ) {
       std::map< unsigned int, PulsarSearch::integrationConf * > * internalContainer = new std::map< unsigned int, PulsarSearch::integrationConf * >();
 
 			internalContainer->insert(std::make_pair(integration, parameters));

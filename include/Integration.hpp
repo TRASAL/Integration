@@ -54,11 +54,11 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
 
 // Implementations
 inline unsigned int integrationConf::getNrThreadsD0() const {
-  return nrSamplesPerBlock;
+  return nrThreadsD0;
 }
 
 inline unsigned int integrationConf::getNrItemsD0() const {
-  return nrSamplesPerThread;
+  return nrItemsD0;
 }
 
 inline void integrationConf::setNrThreadsD0(unsigned int threads) {
