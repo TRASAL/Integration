@@ -29,14 +29,14 @@
 
 
 int main(int argc, char *argv[]) {
-  unsigned int padding = 0;
-  unsigned int integration = 0;
   bool printCode = false;
   bool printResults = false;
   bool random = false;
+  unsigned int padding = 0;
+  unsigned int integration = 0;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
-  long long unsigned int wrongSamples = 0;
+  uint64_t wrongSamples = 0;
   PulsarSearch::integrationConf conf;
   AstroData::Observation observation;
 
@@ -174,7 +174,116 @@ int main(int argc, char *argv[]) {
   }
 
   if ( wrongSamples > 0 ) {
-    std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< long long unsigned int >(observation.getNrDMs()) * (observation.getNrSamplesPerSecond() / integration)) << "%)." << std::endl;
+    std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrDMs()) * (observation.getNrSamplesPerSecond() / integration)) << "%)." << std::endl;
+  } else {
+    std::cout << "TEST PASSED." << std::endl;
+  }
+
+	// Allocate memory
+  input = std::vector< dataType >(observation.getNrSamplesPerSecond() * observation.getNrPaddedDMs(padding / sizeof(dataType)));
+  output = std::vector< dataType >((observation.getNrSamplesPerSecond() / integration) * observation.getNrPaddedDMs(padding / sizeof(dataType)));
+  outputi_control = std::vector< dataType >((observation.getNrSamplesPerSecond() / integration) * observation.getNrPaddedDMs(padding / sizeof(dataType)));
+  try {
+    input_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, input.size() * sizeof(dataType), 0, 0);
+    output_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, output.size() * sizeof(dataType), 0, 0);
+  } catch ( cl::Error & err ) {
+    std::cerr << "OpenCL error allocating memory: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
+    return 1;
+  }
+
+	srand(time(0));
+  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
+    if ( printResults ) {
+      std::cout << sample << ": ";
+    }
+    for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+      if ( random ) {
+        input[(sample * observation.getNrPaddedDMs(padding / sizeof(dataType))) + dm] = rand() % 10;
+      } else {
+        input[(sample * observation.getNrPaddedDMs(padding / sizeof(dataType))) + dm] = sample % 10;
+      }
+      if ( printResults ) {
+        std::cout << input[(sample * observation.getNrPaddedDMs(padding / sizeof(dataType))) + dm] << " ";
+      }
+    }
+    if ( printResults ) {
+      std::cout << std::endl;
+    }
+  }
+  if ( printResults ) {
+    std::cout << std::endl;
+  }
+
+  // Copy data structures to device
+  try {
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(input_d, CL_FALSE, 0, input.size() * sizeof(dataType), reinterpret_cast< void * >(input.data()), 0, 0);
+  } catch ( cl::Error & err ) {
+    std::cerr << "OpenCL error H2D transfer: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
+    return 1;
+  }
+
+	// Generate kernel
+  code = PulsarSearch::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+  kernel;
+  if ( printCode ) {
+    std::cout << *code << std::endl;
+  }
+	try {
+    kernel = isa::OpenCL::compile("integrationSamplesDMs" + isa::utils::toString(integration), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+	} catch ( isa::OpenCL::OpenCLError & err ) {
+    std::cerr << err.what() << std::endl;
+		return 1;
+	}
+
+  // Run OpenCL kernel and CPU control
+  try {
+    cl::NDRange global(observation.getNrDMs() / conf.getNrItemsD0(), observation.getNrSamplesPerSecond() / integration);
+    cl::NDRange local(conf.getNrThreadsD0(), 1);
+
+    std::cout << std::endl;
+    std::cout << "Global: " << observation.getNrDMs() / conf.getNrItemsD0() << " " << observation.getNrSamplesPerSecond() / integration << std::endl;
+    std::cout << "Local: " << conf.getNrThreadsD0() << " " << 1 << std::endl;
+    std::cout << std::endl;
+
+    kernel->setArg(0, input_d);
+    kernel->setArg(1, output_d);
+    clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
+    PulsarSearch::integrationSamplesDMs(observation, integration, padding, input, output_control);
+    clQueues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(dataType), reinterpret_cast< void * >(output.data()));
+  } catch ( cl::Error & err ) {
+    std::cerr << "OpenCL error kernel execution: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
+    return 1;
+  }
+
+  wrongSamples = 0;
+  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond() / integration; sample++ ) {
+    for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+      if ( !isa::utils::same(output_control[(sample * observation.getNrPaddedDMs(padding / sizeof(dataType))) + dm], output[(sample * observation.getNrPaddedDMs(padding / sizeof(dataType))) + dm]) ) {
+        wrongSamples++;
+			}
+		}
+	}
+  if ( printResults ) {
+    for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond() / integration; sample++ ) {
+      std::cout << sample << ": ";
+      for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+        std::cout << output_control[(sample * observation.getNrPaddedDMs(padding / sizeof(dataType))) + dm] << " ";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond() / integration; sample++ ) {
+      std::cout << sample << ": ";
+      for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+        std::cout << output[(sample * observation.getNrPaddedDMs(padding / sizeof(dataType))) + dm] << " ";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+  }
+
+  if ( wrongSamples > 0 ) {
+    std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrDMs()) * (observation.getNrSamplesPerSecond() / integration)) << "%)." << std::endl;
   } else {
     std::cout << "TEST PASSED." << std::endl;
   }

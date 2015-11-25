@@ -23,6 +23,8 @@
 #include <Integration.hpp>
 
 int main(int argc, char * argv[]) {
+  bool DMsSamples = false;
+  bool samplesDMs = false;
   unsigned int padding = 0;
   unsigned int integration = 0;
   PulsarSearch::integrationConf conf;
@@ -30,22 +32,37 @@ int main(int argc, char * argv[]) {
 
   try {
     isa::utils::ArgumentList args(argc, argv);
+    DMsSamples = args.getSwitch("-dms_samples");
+    if ( DMsSamples ) {
+      observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+    }
+    samplesDMs = args.getSwitch("-samples_dms");
+    if ( samplesDMs ) {
+      observation.setDMRange(args.getSwitchArgument< unsigned int >("-dm"), 0.0f, 0.0f);
+    }
     padding = args.getSwitchArgument< unsigned int >("-padding");
     integration = args.getSwitchArgument< unsigned int >("-integration");
-    conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-sb"));
-		conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-st"));
-		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+    conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-threads0"));
+		conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-items0"));
 	} catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " -padding ... -integration ... -sb ... -st ... -samples ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-dms_samples] [-samples_dms] -padding ... -integration ... -threads0 ... -items0 ..." << std::endl;
+    std::cerr << "\t -dms_sample -samples ..." << std::endl;
+    std::cerr << "\t -samples_dms -dms ..." << std::endl;
 		return 1;
 	}
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation.getNrSamplesPerSecond(), dataName, integration, padding);
-  std::cout << *code << std::endl;
+  if ( DMsSamples ) {
+    std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation.getNrSamplesPerSecond(), dataName, integration, padding);
+    std::cout << *code << std::endl;
+  }
+  if ( samplesDMs ) {
+    std::string * code = PulsarSearch::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+    std::cout << *code << std::endl;
+  }
 
   return 0;
 }

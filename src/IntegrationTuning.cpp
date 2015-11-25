@@ -34,6 +34,8 @@ void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue,
 
 int main(int argc, char * argv[]) {
   bool reInit = false;
+  bool DMsSamples = false;
+  bool samplesDMs = false;
   unsigned int padding = 0;
   unsigned int integration = 0;
 	unsigned int nrIterations = 0;
@@ -50,6 +52,12 @@ int main(int argc, char * argv[]) {
 	try {
     isa::utils::ArgumentList args(argc, argv);
 
+    DMsSamples = args.getSwitch("-dms_samples");
+    samplesDMs = args.getSwitch("-samples_dms");
+    if ( DMsSamples && samplesDMs ) {
+      std::cerr << "-dms_samples and -samples_dms are mutually exclusive." << std::endl;
+      return 1;
+    }
 		nrIterations = args.getSwitchArgument< unsigned int >("-iterations");
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
@@ -62,7 +70,7 @@ int main(int argc, char * argv[]) {
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... -padding ... -integration ... -min_threads ... -max_threads ... -max_items ... -vector ... -samples ... -dms ... " << std::endl;
+		std::cerr << argv[0] << " [-dms_samples] [-samples_dms] -iterations ... -opencl_platform ... -opencl_device ... -padding ... -integration ... -min_threads ... -max_threads ... -max_items ... -vector ... -samples ... -dms ... " << std::endl;
 		return 1;
 	} catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -70,8 +78,14 @@ int main(int argc, char * argv[]) {
 	}
 
   // Allocate host memory
-  std::vector< dataType > input(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(dataType)));
-  std::vector< dataType > output(observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerSecond() / integration, padding / sizeof(dataType)));
+  std::vector< dataType > input, output;
+  if ( DMsSamples ) {
+    input = std::vector< dataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(dataType)));
+    output = std::vector< dataType >(observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerSecond() / integration, padding / sizeof(dataType)));
+  } else if ( samplesDMs ) {
+    input = std::vector< dataType >(observation.getNrSamplesPerSecond() * observation.getNrPaddedDMs(padding / sizeof(dataType)));
+    output = std::vector< dataType >((observation.getNrSamplesPerSecond() / integration) * observation.getNrPaddedDMs(padding / sizeof(dataType)));
+  }
 
 	// Initialize OpenCL
 	cl::Context clContext;
@@ -94,16 +108,22 @@ int main(int argc, char * argv[]) {
 	std::cout << std::fixed << std::endl;
 	std::cout << "# nrDMs nrSamples integration samplesPerBlock samplesPerThread GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
 
-	for ( unsigned int samples = minThreads; samples <= maxThreads; samples++) {
-    conf.setNrThreadsD0(samples);
+	for ( unsigned int threads = minThreads; threads <= maxThreads; threads++) {
+    conf.setNrThreadsD0(threads);
     if ( conf.getNrThreadsD0() % vectorWidth != 0 ) {
       continue;
     }
 
-    for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItems; samplesPerThread++ ) {
-      conf.setNrItemsD0(samplesPerThread);
-      if ( (observation.getNrSamplesPerSecond() % (integration * conf.getNrItemsD0())) != 0 ) {
-        continue;
+    for ( unsigned int itemsPerThread = 1; itemsPerThread <= maxItems; itemsPerThread++ ) {
+      conf.setNrItemsD0(itemsPerThread);
+      if ( DMsSamples ) {
+        if ( (observation.getNrSamplesPerSecond() % (integration * conf.getNrItemsD0())) != 0 ) {
+          continue;
+        }
+      } else if ( samplesDMs ) {
+        if ( observation.getNrDMs() % (conf.getNrThreadsD0() * conf.getNrItemsD0()) != 0 ) {
+          continue;
+        }
       }
 
       // Generate kernel
@@ -112,7 +132,12 @@ int main(int argc, char * argv[]) {
       isa::utils::Timer timer;
       cl::Kernel * kernel;
 
-      std::string * code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation.getNrSamplesPerSecond(), dataName, integration, padding);
+      std::string * code;
+      if ( DMsSamples ) {
+        code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation.getNrSamplesPerSecond(), dataName, integration, padding);
+      } else if ( samplesDMs ) {
+        code = PulsarSearch::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+      }
       if ( reInit ) {
         delete clQueues;
         clQueues = new std::vector< std::vector < cl::CommandQueue > >();
@@ -127,7 +152,11 @@ int main(int argc, char * argv[]) {
         reInit = false;
       }
       try {
-        kernel = isa::OpenCL::compile("integrationDMsSamples" + isa::utils::toString(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+        if ( DMsSamples ) {
+          kernel = isa::OpenCL::compile("integrationDMsSamples" + isa::utils::toString(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+        } else if ( samplesDMs ) {
+          kernel = isa::OpenCL::compile("integrationSamplesDMs" + isa::utils::toString(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+        }
       } catch ( isa::OpenCL::OpenCLError & err ) {
         std::cerr << err.what() << std::endl;
         delete code;
@@ -135,8 +164,15 @@ int main(int argc, char * argv[]) {
       }
       delete code;
 
-      cl::NDRange global(conf.getNrThreadsD0() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrItemsD0()), observation.getNrDMs());
-      cl::NDRange local(conf.getNrThreadsD0(), 1);
+      cl::NDRange global;
+      cl::NDRange local;
+      if ( DMsSamples ) {
+        global = cl::NDRrange(conf.getNrThreadsD0() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrItemsD0()), observation.getNrDMs());
+        local = cl::NDRange(conf.getNrThreadsD0(), 1);
+      } else if ( samplesDMs ) {
+        global = cl::NDRrange(observation.getNrDMs() / conf.getNrItemsD0(), observation.getNrSamplesPerSecond() / integration);
+        local = cl::NDRange(conf.getNrThreadsD0(), 1);
+      }
       kernel->setArg(0, input_d);
       kernel->setArg(1, output_d);
       try {
