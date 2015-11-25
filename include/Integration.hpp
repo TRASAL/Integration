@@ -46,8 +46,10 @@ typedef std::map< std::string, std::map < unsigned int, std::map< unsigned int, 
 
 // Sequential
 template< typename T > void integrationDMsSamples(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output);
+template< typename T > void integrationSamplesDMs(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output);
 // OpenCL
 template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationConf & conf, const unsigned int nrSamples, const std::string & inputDataName, const unsigned int integration, const unsigned int padding);
+template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integrationConf & conf, const AstroData::Observation & observation, const std::string & inputDataName, const unsigned int integration, const unsigned int padding);
 // Read configuration files
 void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::string & confFilename);
 
@@ -78,6 +80,19 @@ template< typename T > void integrationDMsSamples(const AstroData::Observation &
         integratedSample += input[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(T))) + (sample + i)];
       }
       output[(dm * isa::utils::pad(observation.getNrSamplesPerSecond() / integration, padding / sizeof(T))) + (sample / integration)] = integratedSample / integration;
+    }
+  }
+}
+
+template< typename T > void integrationSamplesDMs(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output) {
+  for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+    for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample += integration ) {
+      T integratedSample = 0;
+
+      for ( unsigned int i = 0; i < integration; i++ ) {
+        integratedSample += input[((sample + i) * observation.getNrPaddedDMs(padding / sizeof(T))) + dm];
+      }
+      output[((sample / integration) * observation.getNrPaddedDMs(padding / sizeof(T))) + dm] = integratedSample / integration;
     }
   }
 }
@@ -174,6 +189,73 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
   delete sum_s;
   delete load_s;
   delete reduce_s;
+
+  return code;
+}
+
+template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integrationConf & conf, const AstroData::Observation & observation, const std::string & dataName, const unsigned int integration, const unsigned int padding) {
+  std::string * code = new std::string();
+
+  // Begin kernel's template
+  *code = "__kernel void integrationSamplesDMs" + isa::utils::toString(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
+    "unsigned int firstSample = get_group_id(1) * " + isa::utils::toString(observation.getNrSamplesPerSecond() / integration) + ";\n"
+    "unsigned int dm = (get_group_id(0) * " + isa::utils::toString(conf.getNrThreadsD0() * conf.getNrItemsD0()) + ") + get_local_id(0);\n"
+    "<%DEFS%>"
+    "\n"
+    "for ( unsigned int sample = firstSample; sample < " + isa::utils::toString(integration) + "; sample++ ) {\n"
+    "<%SUM%>"
+    "}\n"
+    "<%STORE%>"
+    "}\n";
+  std::string defs_sTemplate = dataName + " integratedSample<%NUM%> = 0;\n";
+  std::string sum_sTemplate = "integratedSample<%NUM%> += input[(sample * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)];\n";
+  std::string store_sTemplate;
+  if ( dataName == "float" ) {
+    store_sTemplate += "output[(firstSample * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> * " + isa::utils::toString(1.0f / integration) + "f;\n";
+  } else if ( dataName == "double" ) {
+    store_sTemplate += "output[(firstSample * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> * " + isa::utils::toString(1.0 / integration) + ";\n";
+  } else {
+    store_sTemplate += "output[(firstSample * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> / " + isa::utils::toString(integration) + ";\n";
+  }
+  // End kernel's template
+
+  std::string * defs_s = new std::string();
+  std::string * sum_s = new std::string();
+  std::string * store_s = new std::string();
+
+  for ( unsigned int dm = 0; dm < conf.getNrItemsD0(); dm++ ) {
+    std::string dm_s = isa::utils::toString(dm);
+    std::string offset_s = isa::utils::toString(dm * conf.getNrThreadsD0());
+    std::string * temp = 0;
+
+    temp = isa::utils::replace(&defs_sTemplate, "<%NUM%>", dm_s);
+    defs_s->append(*temp);
+    delete temp;
+    temp = isa::utils::replace(&sum_sTemplate, "<%NUM%>", dm_s);
+    if ( dm == 0 ) {
+      std::string empty_s("");
+      temp = isa::utils::replace(temp, " + <%OFFSET%>", empty_s, true);
+    } else {
+      temp = isa::utils::replace(temp, "<%OFFSET%>", offset_s, true);
+    }
+    sum_s->append(*temp);
+    delete temp;
+    temp = isa::utils::replace(&store_sTemplate, "<%NUM%>", dm_s);
+    if ( dm == 0 ) {
+      std::string empty_s("");
+      temp = isa::utils::replace(temp, " + <%OFFSET%>", empty_s, true);
+    } else {
+      temp = isa::utils::replace(temp, "<%OFFSET%>", offset_s, true);
+    }
+    store_s->append(*temp);
+    delete temp;
+  }
+  code = isa::utils::replace(code, "<%DEFS%>", *defs_s, true);
+  code = isa::utils::replace(code, "<%SUM%>", *sum_s, true);
+  code = isa::utils::replace(code, "<%STORE%>", *store_s, true);
+  delete defs_s;
+  delete sum_s;
+  delete store_s;
 
   return code;
 }
