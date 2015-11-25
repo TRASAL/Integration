@@ -198,7 +198,7 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
 
   // Begin kernel's template
   *code = "__kernel void integrationSamplesDMs" + isa::utils::toString(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
-    "unsigned int firstSample = get_group_id(1) * " + isa::utils::toString(observation.getNrSamplesPerSecond() / integration) + ";\n"
+    "unsigned int firstSample = get_group_id(1) * " + isa::utils::toString(integration) + ";\n"
     "unsigned int dm = (get_group_id(0) * " + isa::utils::toString(conf.getNrThreadsD0() * conf.getNrItemsD0()) + ") + get_local_id(0);\n"
     "<%DEFS%>"
     "\n"
