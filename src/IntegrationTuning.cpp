@@ -167,10 +167,10 @@ int main(int argc, char * argv[]) {
       cl::NDRange global;
       cl::NDRange local;
       if ( DMsSamples ) {
-        global = cl::NDRrange(conf.getNrThreadsD0() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrItemsD0()), observation.getNrDMs());
+        global = cl::NDRange(conf.getNrThreadsD0() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrItemsD0()), observation.getNrDMs());
         local = cl::NDRange(conf.getNrThreadsD0(), 1);
       } else if ( samplesDMs ) {
-        global = cl::NDRrange(observation.getNrDMs() / conf.getNrItemsD0(), observation.getNrSamplesPerSecond() / integration);
+        global = cl::NDRange(observation.getNrDMs() / conf.getNrItemsD0(), observation.getNrSamplesPerSecond() / integration);
         local = cl::NDRange(conf.getNrThreadsD0(), 1);
       }
       kernel->setArg(0, input_d);
