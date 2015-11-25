@@ -202,7 +202,7 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
     "unsigned int dm = (get_group_id(0) * " + isa::utils::toString(conf.getNrThreadsD0() * conf.getNrItemsD0()) + ") + get_local_id(0);\n"
     "<%DEFS%>"
     "\n"
-    "for ( unsigned int sample = firstSample; sample < " + isa::utils::toString(integration) + "; sample++ ) {\n"
+    "for ( unsigned int sample = firstSample; sample < firstSample + " + isa::utils::toString(integration) + "; sample++ ) {\n"
     "<%SUM%>"
     "}\n"
     "<%STORE%>"
