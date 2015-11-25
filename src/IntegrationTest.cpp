@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
 	// Allocate memory
   input = std::vector< dataType >(observation.getNrSamplesPerSecond() * observation.getNrPaddedDMs(padding / sizeof(dataType)));
   output = std::vector< dataType >((observation.getNrSamplesPerSecond() / integration) * observation.getNrPaddedDMs(padding / sizeof(dataType)));
-  outputi_control = std::vector< dataType >((observation.getNrSamplesPerSecond() / integration) * observation.getNrPaddedDMs(padding / sizeof(dataType)));
+  output_control = std::vector< dataType >((observation.getNrSamplesPerSecond() / integration) * observation.getNrPaddedDMs(padding / sizeof(dataType)));
   try {
     input_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, input.size() * sizeof(dataType), 0, 0);
     output_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, output.size() * sizeof(dataType), 0, 0);
@@ -224,7 +224,6 @@ int main(int argc, char *argv[]) {
 
 	// Generate kernel
   code = PulsarSearch::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
-  kernel;
   if ( printCode ) {
     std::cout << *code << std::endl;
   }
