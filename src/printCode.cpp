@@ -33,9 +33,6 @@ int main(int argc, char * argv[]) {
   try {
     isa::utils::ArgumentList args(argc, argv);
     DMsSamples = args.getSwitch("-dms_samples");
-    if ( DMsSamples ) {
-      observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
-    }
     samplesDMs = args.getSwitch("-samples_dms");
     if ( samplesDMs ) {
       observation.setDMRange(args.getSwitchArgument< unsigned int >("-dm"), 0.0f, 0.0f);
@@ -44,12 +41,12 @@ int main(int argc, char * argv[]) {
     integration = args.getSwitchArgument< unsigned int >("-integration");
     conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-threads0"));
 		conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-items0"));
+    observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
 	} catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-dms_samples] [-samples_dms] -padding ... -integration ... -threads0 ... -items0 ..." << std::endl;
-    std::cerr << "\t -dms_sample -samples ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-dms_samples] [-samples_dms] -padding ... -integration ... -threads0 ... -items0 ... -samples ..." << std::endl;
     std::cerr << "\t -samples_dms -dms ..." << std::endl;
 		return 1;
 	}
