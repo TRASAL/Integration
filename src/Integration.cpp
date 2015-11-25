@@ -63,13 +63,13 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
 			internalContainer->insert(std::make_pair(integration, parameters));
 			externalContainer->insert(std::make_pair(dim0, internalContainer));
 			tunedConf.insert(std::make_pair(deviceName, externalContainer));
-		} else if ( tunedConf[deviceName]->count(dim0) == 0 ) {
+		} else if ( tunedConf.at(deviceName)->count(dim0) == 0 ) {
       std::map< unsigned int, PulsarSearch::integrationConf * > * internalContainer = new std::map< unsigned int, PulsarSearch::integrationConf * >();
 
 			internalContainer->insert(std::make_pair(integration, parameters));
-			tunedConf[deviceName]->insert(std::make_pair(dim0, internalContainer));
+			tunedConf.at(deviceName)->insert(std::make_pair(dim0, internalContainer));
 		} else {
-			tunedConf[deviceName][dim0]->insert(std::make_pair(integration, parameters));
+			tunedConf.at(deviceName)->at(dim0)->insert(std::make_pair(integration, parameters));
 		}
   }
   confFile.close();
