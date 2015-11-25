@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
   long long unsigned int wrongSamples = 0;
-  PulsarSearch::integrationDMsSamplesConf conf;
+  PulsarSearch::integrationConf conf;
   AstroData::Observation observation;
 
   try {
@@ -49,8 +49,8 @@ int main(int argc, char *argv[]) {
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     padding = args.getSwitchArgument< unsigned int >("-padding");
     integration = args.getSwitchArgument< unsigned int >("-integration");
-    conf.setNrSamplesPerBlock(args.getSwitchArgument< unsigned int >("-sb"));
-		conf.setNrSamplesPerThread(args.getSwitchArgument< unsigned int >("-st"));
+    conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-sb"));
+		conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-st"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
 	} catch  ( isa::utils::SwitchNotFound & err ) {
@@ -129,12 +129,12 @@ int main(int argc, char *argv[]) {
 
   // Run OpenCL kernel and CPU control
   try {
-    cl::NDRange global(conf.getNrSamplesPerBlock() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrSamplesPerThread()), observation.getNrDMs());
-    cl::NDRange local(conf.getNrSamplesPerBlock(), 1);
+    cl::NDRange global(conf.getNrThreadsD0() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrItemsD0()), observation.getNrDMs());
+    cl::NDRange local(conf.getNrThreadsD0(), 1);
 
     std::cout << std::endl;
-    std::cout << "Global: " << conf.getNrSamplesPerBlock() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrSamplesPerThread()) << " " << observation.getNrDMs() << std::endl;
-    std::cout << "Local: " << conf.getNrSamplesPerBlock() << " " << 1 << std::endl;
+    std::cout << "Global: " << conf.getNrThreadsD0() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrItemsD0()) << " " << observation.getNrDMs() << std::endl;
+    std::cout << "Local: " << conf.getNrThreadsD0() << " " << 1 << std::endl;
     std::cout << std::endl;
 
     kernel->setArg(0, input_d);

@@ -25,15 +25,15 @@
 int main(int argc, char * argv[]) {
   unsigned int padding = 0;
   unsigned int integration = 0;
-  PulsarSearch::integrationDMsSamplesConf conf;
+  PulsarSearch::integrationConf conf;
   AstroData::Observation observation;
 
   try {
     isa::utils::ArgumentList args(argc, argv);
     padding = args.getSwitchArgument< unsigned int >("-padding");
     integration = args.getSwitchArgument< unsigned int >("-integration");
-    conf.setNrSamplesPerBlock(args.getSwitchArgument< unsigned int >("-sb"));
-		conf.setNrSamplesPerThread(args.getSwitchArgument< unsigned int >("-st"));
+    conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-sb"));
+		conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-st"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
 	} catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;

@@ -44,7 +44,7 @@ int main(int argc, char * argv[]) {
   unsigned int maxItems = 0;
   unsigned int vectorWidth = 0;
   AstroData::Observation observation;
-  PulsarSearch::integrationDMsSamplesConf conf;
+  PulsarSearch::integrationConf conf;
   cl::Event event;
 
 	try {
@@ -95,14 +95,14 @@ int main(int argc, char * argv[]) {
 	std::cout << "# nrDMs nrSamples integration samplesPerBlock samplesPerThread GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
 
 	for ( unsigned int samples = minThreads; samples <= maxThreads; samples++) {
-    conf.setNrSamplesPerBlock(samples);
-    if ( conf.getNrSamplesPerBlock() % vectorWidth != 0 ) {
+    conf.setNrThreadsD0(samples);
+    if ( conf.getNrThreadsD0() % vectorWidth != 0 ) {
       continue;
     }
 
     for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItems; samplesPerThread++ ) {
-      conf.setNrSamplesPerThread(samplesPerThread);
-      if ( (observation.getNrSamplesPerSecond() % (integration * conf.getNrSamplesPerThread())) != 0 ) {
+      conf.setNrItemsD0(samplesPerThread);
+      if ( (observation.getNrSamplesPerSecond() % (integration * conf.getNrItemsD0())) != 0 ) {
         continue;
       }
 
@@ -135,8 +135,8 @@ int main(int argc, char * argv[]) {
       }
       delete code;
 
-      cl::NDRange global(conf.getNrSamplesPerBlock() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrSamplesPerThread()), observation.getNrDMs());
-      cl::NDRange local(conf.getNrSamplesPerBlock(), 1);
+      cl::NDRange global(conf.getNrThreadsD0() * ((observation.getNrSamplesPerSecond() / integration) / conf.getNrItemsD0()), observation.getNrDMs());
+      cl::NDRange local(conf.getNrThreadsD0(), 1);
       kernel->setArg(0, input_d);
       kernel->setArg(1, output_d);
       try {
