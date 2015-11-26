@@ -106,7 +106,7 @@ int main(int argc, char * argv[]) {
   }
 
 	std::cout << std::fixed << std::endl;
-	std::cout << "# nrDMs nrSamples integration samplesPerBlock samplesPerThread GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
+	std::cout << "# nrDMs nrSamples integration threadsD0 itemsD0 GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
 
 	for ( unsigned int threads = minThreads; threads <= maxThreads; threads++) {
     conf.setNrThreadsD0(threads);
