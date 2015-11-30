@@ -20,7 +20,7 @@ def tune(queue, table, operator, samples):
     if operator.casefold() == "max" or operator.casefold() == "min":
         dms_range = manage.get_dm_range(queue, table, samples)
         for dm in dms_range:
-            queue.execute("SELECT nrThreadsD0,nrItemsD0,GFLOPS,GBs,time,time_err,cov FROM " + table + " WHERE (GFLOPS = (SELECT " + operator + "(GFLOPS) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND samples = " + samples + "))) AND (DMs = " + str(dm[0]) + " AND samples = " + samples + ")")
+            queue.execute("SELECT nrThreadsD0,nrItemsD0,GFLOPs,GBs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND samples = " + samples + "))) AND (DMs = " + str(dm[0]) + " AND samples = " + samples + ")")
             best = queue.fetchall()
             confs.append([dm[0], best[0][0], best[0][1], best[0][2], best[0][3], best[0][4], best[0][5], best[0][6]])
     return confs
