@@ -1,10 +1,12 @@
 
+ROOT ?= $(HOME)
+
 # https://github.com/isazi/utils
-UTILS := $(HOME)/src/utils
+UTILS := $(ROOT)/src/utils
 # https://github.com/isazi/OpenCL
-OPENCL := $(HOME)/src/OpenCL
+OPENCL := $(ROOT)/src/OpenCL
 # https://github.com/isazi/AstroData
-ASTRODATA := $(HOME)/src/AstroData
+ASTRODATA := $(ROOT)/src/AstroData
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include"
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
@@ -18,7 +20,7 @@ else
 endif
 
 LDFLAGS := -lm
-CL_LDFLAGS := $(LDFLAGS) -lOpenCL
+CL_LDFLAGS := $(LDFLAGS) -L/usr/local/cuda-6.0/targets/x86_64-linux/lib -lOpenCL
 
 CC := g++
 
