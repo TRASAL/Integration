@@ -21,7 +21,7 @@ integrationConf::integrationConf() : nrThreadsD0(0), nrItemsD0(0) {}
 integrationConf::~integrationConf() {}
 
 std::string integrationConf::print() const {
-  return isa::utils::toString(nrThreadsD0) + " " + isa::utils::toString(nrItemsD0);
+  return std::to_string(subbandDedispersion) + " " + std::to_string(nrThreadsD0) + " " + std::to_string(nrItemsD0);
 }
 
 void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::string & confFilename) {
@@ -50,6 +50,9 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
 		integration = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+    parameters->setSubbandDedispersion(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
 		parameters->setNrThreadsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));

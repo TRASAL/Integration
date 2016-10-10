@@ -32,12 +32,15 @@ public:
   // Get
   unsigned int getNrThreadsD0() const;
   unsigned int getNrItemsD0() const;
+  bool getSubbandDedispersion() const;
   // Set
   void setNrThreadsD0(unsigned int threads);
   void setNrItemsD0(unsigned int items);
+  void setSubbandDedispersion(bool subband);
   // utils
   std::string print() const;
 private:
+  bool subbandDedispersion;
   unsigned int nrThreadsD0;
   unsigned int nrItemsD0;
 };
@@ -45,10 +48,10 @@ private:
 typedef std::map< std::string, std::map < unsigned int, std::map< unsigned int, PulsarSearch::integrationConf * > * > * > tunedIntegrationConf;
 
 // Sequential
-template< typename T > void integrationDMsSamples(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output);
-template< typename T > void integrationSamplesDMs(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output);
+template< typename T > void integrationDMsSamples(const bool subbandDedispersion, const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output);
+template< typename T > void integrationSamplesDMs(const bool subbandDedispersion, const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output);
 // OpenCL
-template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationConf & conf, const unsigned int nrSamples, const std::string & inputDataName, const unsigned int integration, const unsigned int padding);
+template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationConf & conf, const AstroData::Observation & observation, const std::string & inputDataName, const unsigned int integration, const unsigned int padding);
 template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integrationConf & conf, const AstroData::Observation & observation, const std::string & inputDataName, const unsigned int integration, const unsigned int padding);
 // Read configuration files
 void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::string & confFilename);
@@ -63,6 +66,10 @@ inline unsigned int integrationConf::getNrItemsD0() const {
   return nrItemsD0;
 }
 
+inline bool integrationConf::getSubbandDedispersion() const {
+  return subbandDedispersion;
+}
+
 inline void integrationConf::setNrThreadsD0(unsigned int threads) {
   nrThreadsD0 = threads;
 }
@@ -71,64 +78,94 @@ inline void integrationConf::setNrItemsD0(unsigned int items) {
   nrItemsD0 = items;
 }
 
-template< typename T > void integrationDMsSamples(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output) {
-  for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-    for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample += integration ) {
-      T integratedSample = 0;
+inline void integrationConf::setSubbandDedispersion(bool subband) {
+  subbandDedispersion = subband;
+}
 
-      for ( unsigned int i = 0; i < integration; i++ ) {
-        integratedSample += input[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(T))) + (sample + i)];
+template< typename T > void integrationDMsSamples(const bool subbandDedispersion, const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output) {
+  unsigned int nrDMs = 0;
+
+  if ( subbandDedispersion ) {
+    nrDMs = observation.getNrDMsSubbanding() * observation.getNrDMs();
+  } else {
+    nrDMs = observation.getNrDMs();
+  }
+
+  for ( unsigned int beam = 0; beam < observation.getNrSyntheticBeams(); beam++ ) {
+    for ( unsigned int dm = 0; dm < nrDMs; dm++ ) {
+      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample += integration ) {
+        T integratedSample = 0;
+
+        for ( unsigned int i = 0; i < integration; i++ ) {
+          integratedSample += input[(beam * nrDMs * observation.getNrSamplesPerPaddedBatch(padding / sizeof(T))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(T))) + (sample + i)];
+        }
+        output[(beam * nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + (sample / integration)] = integratedSample / integration;
       }
-      output[(dm * isa::utils::pad(observation.getNrSamplesPerSecond() / integration, padding / sizeof(T))) + (sample / integration)] = integratedSample / integration;
     }
   }
 }
 
-template< typename T > void integrationSamplesDMs(const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output) {
-  for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-    for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample += integration ) {
-      T integratedSample = 0;
+template< typename T > void integrationSamplesDMs(const bool subbandDedispersion, const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output) {
+  unsigned int nrDMs = 0;
 
-      for ( unsigned int i = 0; i < integration; i++ ) {
-        integratedSample += input[((sample + i) * observation.getNrPaddedDMs(padding / sizeof(T))) + dm];
+  if ( subbandDedispersion ) {
+    nrDMs = observation.getNrDMsSubbanding() * observation.getNrDMs();
+  } else {
+    nrDMs = observation.getNrDMs();
+  }
+  for ( unsigned int beam = 0; beam < observation.getNrSyntheticBeams(); beam++ ) {
+    for ( unsigned int dm = 0; dm < nrDMs; dm++ ) {
+      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample += integration ) {
+        T integratedSample = 0;
+
+        for ( unsigned int i = 0; i < integration; i++ ) {
+          integratedSample += input[(beam * observation.getNrSamplesPerBatch() * isa::utils::pad(nrDMs, padding / sizeof(T))) + ((sample + i) * isa::utils::pad(nrDMs, padding / sizeof(T))) + dm];
+        }
+        output[(beam * (observation.getNrSamplesPerBatch() / integration) * isa::utils::pad(nrDMs, padding / sizeof(T))) + ((sample / integration) * isa::utils::pad(nrDMs, padding / sizeof(T))) + dm] = integratedSample / integration;
       }
-      output[((sample / integration) * observation.getNrPaddedDMs(padding / sizeof(T))) + dm] = integratedSample / integration;
     }
   }
 }
 
-template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationConf & conf, const unsigned int nrSamples, const std::string & dataName, const unsigned int integration, const unsigned int padding) {
+template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integrationConf & conf, const AstroData::Observation & observation, const std::string & dataName, const unsigned int integration, const unsigned int padding) {
+  unsigned int nrDMs = 0;
   std::string * code = new std::string();
 
+  if ( conf.getSubbandDedispersion() ) {
+    nrDMs = observation.getNrDMsSubbanding() * observation.getNrDMs();
+  } else {
+    nrDMs = observation.getNrDMs();
+  }
   // Begin kernel's template
-  *code = "__kernel void integrationDMsSamples" + isa::utils::toString(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
+  *code = "__kernel void integrationDMsSamples" + std::to_string(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
+    "unsigned int beam = get_group_id(2);\n"
     "unsigned int dm = get_group_id(1);\n"
-    "__local " + dataName + " buffer[" + isa::utils::toString(conf.getNrThreadsD0() * conf.getNrItemsD0()) + "];\n"
-    "unsigned int inGlobalMemory = (dm * " + isa::utils::toString(isa::utils::pad(nrSamples, padding / sizeof(T))) + ") + (get_group_id(0) * " + isa::utils::toString(integration * conf.getNrItemsD0()) + ");\n"
+    "__local " + dataName + " buffer[" + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0()) + "];\n"
+    "unsigned int inGlobalMemory = (beam * " + std::to_string(nrDMs * observation.getNrSamplesPerPaddedBatch(padding / sizeof(T))) + ") + (dm * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(integration * conf.getNrItemsD0()) + ");\n"
     "<%DEFS%>"
     "\n"
     "// First computing phase\n"
-    "for ( unsigned int sample = get_local_id(0); sample < " + isa::utils::toString(integration) + "; sample += " + isa::utils::toString(conf.getNrThreadsD0()) + " ) {\n"
+    "for ( unsigned int sample = get_local_id(0); sample < " + std::to_string(integration) + "; sample += " + std::to_string(conf.getNrThreadsD0()) + " ) {\n"
     "<%SUM%>"
     "}\n"
     "<%LOAD%>"
     "barrier(CLK_LOCAL_MEM_FENCE);\n"
     "// Reduce\n"
-    "unsigned int threshold = " + isa::utils::toString(conf.getNrThreadsD0() / 2) + ";\n"
+    "unsigned int threshold = " + std::to_string(conf.getNrThreadsD0() / 2) + ";\n"
     "for ( unsigned int sample = get_local_id(0); threshold > 0; threshold /= 2 ) {\n"
     "if ( sample < threshold ) {\n"
     "<%REDUCE%>"
     "}\n"
     "barrier(CLK_LOCAL_MEM_FENCE);\n"
     "}\n"
-    "inGlobalMemory = (dm * " + isa::utils::toString(isa::utils::pad(nrSamples / integration, padding / sizeof(T))) + ") + (get_group_id(0) * " + isa::utils::toString(conf.getNrItemsD0()) + ");\n"
-    "if ( get_local_id(0) < " + isa::utils::toString(conf.getNrItemsD0()) + " ) {\n";
+    "inGlobalMemory = (beam * " + std::to_string(nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + ") + (dm * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(conf.getNrItemsD0()) + ");\n"
+    "if ( get_local_id(0) < " + std::to_string(conf.getNrItemsD0()) + " ) {\n";
   if ( dataName == "float" ) {
-    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + isa::utils::toString(conf.getNrThreadsD0()) + "] * " + isa::utils::toString(1.0f / integration) + "f;\n";
+    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + std::to_string(conf.getNrThreadsD0()) + "] * " + std::to_string(1.0f / integration) + "f;\n";
   } else if ( dataName == "double" ) {
-    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + isa::utils::toString(conf.getNrThreadsD0()) + "] * " + isa::utils::toString(1.0 / integration) + ";\n";
+    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + std::to_string(conf.getNrThreadsD0()) + "] * " + std::to_string(1.0 / integration) + ";\n";
   } else {
-    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + isa::utils::toString(conf.getNrThreadsD0()) + "] / " + isa::utils::toString(integration) + ";\n";
+    *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + std::to_string(conf.getNrThreadsD0()) + "] / " + std::to_string(integration) + ";\n";
   }
   *code += "}\n"
     "}\n";
@@ -145,9 +182,9 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
   std::string * reduce_s = new std::string();
 
   for ( unsigned int sample = 0; sample < conf.getNrItemsD0(); sample++ ) {
-    std::string sample_s = isa::utils::toString(sample);
-    std::string offset_s = isa::utils::toString(sample * integration);
-    std::string localOffset_s = isa::utils::toString(sample * conf.getNrThreadsD0());
+    std::string sample_s = std::to_string(sample);
+    std::string offset_s = std::to_string(sample * integration);
+    std::string localOffset_s = std::to_string(sample * conf.getNrThreadsD0());
     std::string * temp = 0;
 
     temp = isa::utils::replace(&defs_sTemplate, "<%NUM%>", sample_s);
@@ -194,28 +231,35 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
 }
 
 template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integrationConf & conf, const AstroData::Observation & observation, const std::string & dataName, const unsigned int integration, const unsigned int padding) {
+  unsigned int nrDMs = 0;
   std::string * code = new std::string();
 
+  if ( conf.getSubbandDedispersion() ) {
+    nrDMs = observation.getNrDMsSubbanding() * observation.getNrDMs();
+  } else {
+    nrDMs = observation.getNrDMs();
+  }
   // Begin kernel's template
-  *code = "__kernel void integrationSamplesDMs" + isa::utils::toString(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
-    "unsigned int firstSample = get_group_id(1) * " + isa::utils::toString(integration) + ";\n"
-    "unsigned int dm = (get_group_id(0) * " + isa::utils::toString(conf.getNrThreadsD0() * conf.getNrItemsD0()) + ") + get_local_id(0);\n"
+  *code = "__kernel void integrationSamplesDMs" + std::to_string(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
+    "unsigned int beam = get_group_id(2);\n"
+    "unsigned int firstSample = get_group_id(1) * " + std::to_string(integration) + ";\n"
+    "unsigned int dm = (get_group_id(0) * " + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0()) + ") + get_local_id(0);\n"
     "<%DEFS%>"
     "\n"
-    "for ( unsigned int sample = firstSample; sample < firstSample + " + isa::utils::toString(integration) + "; sample++ ) {\n"
+    "for ( unsigned int sample = firstSample; sample < firstSample + " + std::to_string(integration) + "; sample++ ) {\n"
     "<%SUM%>"
     "}\n"
     "<%STORE%>"
     "}\n";
   std::string defs_sTemplate = dataName + " integratedSample<%NUM%> = 0;\n";
-  std::string sum_sTemplate = "integratedSample<%NUM%> += input[(sample * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)];\n";
+  std::string sum_sTemplate = "integratedSample<%NUM%> += input[(beam * " + std::to_string(observation.getNrSamplesPerBatch() * isa::utils::pad(nrDMs, padding / sizeof(T))) + " ) + (sample * " + std::to_string(isa::utils::pad(nrDMs, padding / sizeof(T))) + ") + (dm + <%OFFSET%>)];\n";
   std::string store_sTemplate;
   if ( dataName == "float" ) {
-    store_sTemplate += "output[(get_group_id(1) * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> * " + isa::utils::toString(1.0f / integration) + "f;\n";
+    store_sTemplate += "output[(beam * " + std::to_string((observation.getNrSamplesPerBatch() / integration) * isa::utils::pad(nrDMs, padding / sizeof(T))) + ") + (get_group_id(1) * " + std::to_string(isa::utils::pad(nrDMs, padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> * " + std::to_string(1.0f / integration) + "f;\n";
   } else if ( dataName == "double" ) {
-    store_sTemplate += "output[(get_group_id(1) * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> * " + isa::utils::toString(1.0 / integration) + ";\n";
+    store_sTemplate += "output[(beam * " + std::to_string((observation.getNrSamplesPerBatch() / integration) * isa::utils::pad(nrDMs, padding / sizeof(T))) + ") + (get_group_id(1) * " + std::to_string(isa::utils::pad(nrDMs, padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> * " + std::to_string(1.0 / integration) + ";\n";
   } else {
-    store_sTemplate += "output[(get_group_id(1) * " + isa::utils::toString(observation.getNrPaddedDMs(padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> / " + isa::utils::toString(integration) + ";\n";
+    store_sTemplate += "output[(beam * " + std::to_string((observation.getNrSamplesPerBatch() / integration) * isa::utils::pad(nrDMs, padding / sizeof(T))) + ") + (get_group_id(1) * " + std::to_string(isa::utils::pad(nrDMs, padding / sizeof(T))) + ") + (dm + <%OFFSET%>)] = integratedSample<%NUM%> / " + std::to_string(integration) + ";\n";
   }
   // End kernel's template
 
@@ -224,8 +268,8 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
   std::string * store_s = new std::string();
 
   for ( unsigned int dm = 0; dm < conf.getNrItemsD0(); dm++ ) {
-    std::string dm_s = isa::utils::toString(dm);
-    std::string offset_s = isa::utils::toString(dm * conf.getNrThreadsD0());
+    std::string dm_s = std::to_string(dm);
+    std::string offset_s = std::to_string(dm * conf.getNrThreadsD0());
     std::string * temp = 0;
 
     temp = isa::utils::replace(&defs_sTemplate, "<%NUM%>", dm_s);
