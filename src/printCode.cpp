@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
       observation.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), 0.0f, 0.0f);
     }
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
-    observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+    observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setNrSyntheticBeams(args.getSwitchArgument< unsigned int >("-beams"));
   } catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
