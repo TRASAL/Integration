@@ -175,7 +175,7 @@ int main(int argc, char * argv[]) {
       if ( DMsSamples ) {
         global = cl::NDRange(conf.getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / integration) / conf.getNrItemsD0()), observation.getNrDMsSubbanding() * observation.getNrDMs(), observation.getNrSyntheticBeams());
         local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
-      } else if ( samplesDMs ) {
+      } else {
         global = cl::NDRange((observation.getNrDMsSubbanding() * observation.getNrDMs())/ conf.getNrItemsD0(), observation.getNrSamplesPerBatch() / integration, observation.getNrSyntheticBeams());
         local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
       }
