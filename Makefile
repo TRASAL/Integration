@@ -1,12 +1,12 @@
 
-ROOT ?= $(HOME)
+SOURCE_ROOT ?= $(HOME)
 
 # https://github.com/isazi/utils
-UTILS := $(ROOT)/src/utils
+UTILS := $(SOURCE_ROOT)/src/utils
 # https://github.com/isazi/OpenCL
-OPENCL := $(ROOT)/src/OpenCL
+OPENCL := $(SOURCE_ROOT)/src/OpenCL
 # https://github.com/isazi/AstroData
-ASTRODATA := $(ROOT)/src/AstroData
+ASTRODATA := $(SOURCE_ROOT)/src/AstroData
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include"
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
@@ -42,6 +42,14 @@ bin/IntegrationTuning: $(CL_DEPS) src/IntegrationTuning.cpp
 
 bin/printCode: $(DEPS) src/printCode.cpp
 	$(CC) -o bin/printCode src/printCode.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
+
+test: bin/IntegrationTest bin/printCode
+	echo "Example kernel:"
+	./bin/printCode -samples_dms -padding 32 -vector 32 -integration 4 -samples_per_block 4  -samples_per_thread 5 -samples 20 -dms 20
+	./bin/IntegrationTest -opencl_platform 0 -opencl_device 0 -samples_dms -vector 32 -padding 32 -integration 4 -samples_per_block 4 -samples_per_thread 5 -samples 20 -dms 20
+
+tune: bin/IntegrationTuning
+	./bin/IntegrationTuning -opencl_platform 0 -opencl_device 0 -padding 32 -vector 32 -integration 4 -min_threads 1 -max_threads 200 -max_items 200 -iterations 3 -samples_dms -dms 1024 -samples 1024
 
 clean:
 	-@rm bin/*
