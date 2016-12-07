@@ -49,15 +49,15 @@ int main(int argc, char *argv[]) {
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     padding = args.getSwitchArgument< unsigned int >("-padding");
     integration = args.getSwitchArgument< unsigned int >("-integration");
-    conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-sb"));
-		conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-st"));
+    conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-samples_per_block"));
+		conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-samples_per_thread"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
 	} catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] [-random] -opencl_platform ... -opencl_device ... -padding ... -integration ... -sb ... -st ... -samples ... -dms ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] [-random] -opencl_platform ... -opencl_device ... -padding ... -integration ... -samples_per_block ... -samples_per_thread ... -samples ... -dms ..." << std::endl;
 		return 1;
 	}
 

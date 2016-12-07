@@ -70,7 +70,7 @@ int main(int argc, char * argv[]) {
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-		std::cerr << argv[0] << " [-dms_samples] [-samples_dms] -iterations ... -opencl_platform ... -opencl_device ... -padding ... -integration ... -min_threads ... -max_threads ... -max_items ... -vector ... -samples ... -dms ... " << std::endl;
+		std::cerr << argv[0] << " [-dms_samples] [-samples_dms] -iterations ... -opencl_platform ... -opencl_device ... -padding ... -vector ... -integration ... -min_threads ... -max_threads ... -max_items ... -vector ... -samples ... -dms ... " << std::endl;
 		return 1;
 	} catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
