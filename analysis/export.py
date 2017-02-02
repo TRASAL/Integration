@@ -15,13 +15,14 @@
 
 import manage
 
-def tune(queue, table, operator, samples):
+def tune(queue, table, operator, samples, integration):
     confs = list()
     if operator.casefold() == "max" or operator.casefold() == "min":
         dms_range = manage.get_dm_range(queue, table, samples)
         for dm in dms_range:
-            queue.execute("SELECT nrThreadsD0,nrItemsD0,GFLOPs,GBs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND samples = " + samples + "))) AND (DMs = " + str(dm[0]) + " AND samples = " + samples + ")")
+            constraint = "(DMs = " + str(dm[0]) + " AND samples = " + samples + " AND integration = " + integration + ")"
+            queue.execute("SELECT nrThreadsD0,nrItemsD0,GFLOPs,GBs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE " + constraint + ")) AND " + constraint)
             best = queue.fetchall()
-            confs.append([dm[0], best[0][0], best[0][1], best[0][2], best[0][3], best[0][4], best[0][5], best[0][6]])
+            confs.append([dm[0], integration, best[0][0], best[0][1], best[0][2], best[0][3], best[0][4], best[0][5], best[0][6]])
     return confs
 

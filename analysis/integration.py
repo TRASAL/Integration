@@ -72,13 +72,13 @@ elif COMMAND == "load":
     except:
         print(sys.exc_info())
 elif COMMAND == "tune":
-    if len(sys.argv) != 5:
-        print("Usage: " + sys.argv[0] + " tune <table> <operator> <samples>")
+    if len(sys.argv) != 6:
+        print("Usage: " + sys.argv[0] + " tune <table> <operator> <samples> <integration>")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
-        CONFS = export.tune(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4])
+        CONFS = export.tune(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
         manage.print_results(CONFS)
     except:
         print(sys.exc_info())
