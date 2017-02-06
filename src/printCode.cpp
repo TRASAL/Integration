@@ -47,7 +47,7 @@ int main(int argc, char * argv[]) {
     }
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
     observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
-    observation.setNrSyntheticBeams(args.getSwitchArgument< unsigned int >("-beams"));
+    observation.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-beams"));
   } catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;

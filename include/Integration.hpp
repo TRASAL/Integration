@@ -91,7 +91,7 @@ template< typename T > void integrationDMsSamples(const bool subbandDedispersion
     nrDMs = observation.getNrDMs();
   }
 
-  for ( unsigned int beam = 0; beam < observation.getNrSyntheticBeams(); beam++ ) {
+  for ( unsigned int beam = 0; beam < observation.getNrSynthesizedBeams(); beam++ ) {
     for ( unsigned int dm = 0; dm < nrDMs; dm++ ) {
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample += integration ) {
         T integratedSample = 0;
@@ -113,7 +113,7 @@ template< typename T > void integrationSamplesDMs(const bool subbandDedispersion
   } else {
     nrDMs = observation.getNrDMs();
   }
-  for ( unsigned int beam = 0; beam < observation.getNrSyntheticBeams(); beam++ ) {
+  for ( unsigned int beam = 0; beam < observation.getNrSynthesizedBeams(); beam++ ) {
     for ( unsigned int dm = 0; dm < nrDMs; dm++ ) {
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample += integration ) {
         T integratedSample = 0;

@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     }
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
     observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
-    observation.setNrSyntheticBeams(args.getSwitchArgument< unsigned int >("-beams"));
+    observation.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-beams"));
   } catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -92,13 +92,13 @@ int main(int argc, char *argv[]) {
   std::vector< dataType > output_control;
 
   if ( DMsSamples ) {
-    input.resize(observation.getNrSyntheticBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(dataType)));
-    output.resize(observation.getNrSyntheticBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType)));
-    output_control.resize(observation.getNrSyntheticBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType)));
+    input.resize(observation.getNrSynthesizedBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(dataType)));
+    output.resize(observation.getNrSynthesizedBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType)));
+    output_control.resize(observation.getNrSynthesizedBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType)));
   } else {
-    input.resize(observation.getNrSyntheticBeams() * observation.getNrSamplesPerBatch() * observation.getNrDMsSubbanding() * observation.getNrPaddedDMs(padding / sizeof(dataType)));
-    output.resize(observation.getNrSyntheticBeams() * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMsSubbanding() * observation.getNrPaddedDMs(padding / sizeof(dataType)));
-    output_control.resize(observation.getNrSyntheticBeams() * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMsSubbanding() * observation.getNrPaddedDMs(padding / sizeof(dataType)));
+    input.resize(observation.getNrSynthesizedBeams() * observation.getNrSamplesPerBatch() * observation.getNrDMsSubbanding() * observation.getNrPaddedDMs(padding / sizeof(dataType)));
+    output.resize(observation.getNrSynthesizedBeams() * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMsSubbanding() * observation.getNrPaddedDMs(padding / sizeof(dataType)));
+    output_control.resize(observation.getNrSynthesizedBeams() * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMsSubbanding() * observation.getNrPaddedDMs(padding / sizeof(dataType)));
   }
 
   try {
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
   }
 
   srand(time(0));
-  for ( unsigned int beam = 0; beam < observation.getNrSyntheticBeams(); beam++ ) {
+  for ( unsigned int beam = 0; beam < observation.getNrSynthesizedBeams(); beam++ ) {
     if ( printResults ) {
       std::cout << "Beam: " << beam << std::endl;
     }
@@ -201,10 +201,10 @@ int main(int argc, char *argv[]) {
     cl::NDRange local;
 
     if ( DMsSamples ) {
-      global = cl::NDRange(conf.getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / integration) / conf.getNrItemsD0()), observation.getNrDMsSubbanding() * observation.getNrDMs(), observation.getNrSyntheticBeams());
+      global = cl::NDRange(conf.getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / integration) / conf.getNrItemsD0()), observation.getNrDMsSubbanding() * observation.getNrDMs(), observation.getNrSynthesizedBeams());
       local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
     } else {
-      global = cl::NDRange((observation.getNrDMsSubbanding() * observation.getNrDMs()) / conf.getNrItemsD0(), observation.getNrSamplesPerBatch() / integration, observation.getNrSyntheticBeams());
+      global = cl::NDRange((observation.getNrDMsSubbanding() * observation.getNrDMs()) / conf.getNrItemsD0(), observation.getNrSamplesPerBatch() / integration, observation.getNrSynthesizedBeams());
       local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
     }
 
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  for ( unsigned int beam = 0; beam < observation.getNrSyntheticBeams(); beam++ ) {
+  for ( unsigned int beam = 0; beam < observation.getNrSynthesizedBeams(); beam++ ) {
     if ( printResults ) {
       std::cout << "Beam: " << beam << std::endl;
     }
