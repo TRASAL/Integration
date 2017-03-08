@@ -20,7 +20,7 @@ else
 endif
 
 LDFLAGS := -lm
-CL_LDFLAGS := $(LDFLAGS) -L/usr/local/cuda-6.0/targets/x86_64-linux/lib -lOpenCL
+CL_LDFLAGS := $(LDFLAGS) -lOpenCL
 
 CC := g++
 
