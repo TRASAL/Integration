@@ -32,7 +32,7 @@ CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $
 all: bin/Integration.o bin/IntegrationTest bin/IntegrationTuning bin/printCode
 
 bin/Integration.o: $(ASTRODATA)/bin/Observation.o $(UTILS)/bin/utils.o include/Integration.hpp src/Integration.cpp
-	-m@kdir -p bin
+	-@mkdir -p bin
 	$(CC) -o bin/Integration.o -c src/Integration.cpp $(CL_INCLUDES) $(CFLAGS)
 
 bin/IntegrationTest: $(CL_DEPS) src/IntegrationTest.cpp
