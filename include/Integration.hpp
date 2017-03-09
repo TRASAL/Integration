@@ -284,5 +284,3 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
 
 } // PulsarSearch
 
-#endif // INTEGRATION_HPP
-
