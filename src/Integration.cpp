@@ -16,7 +16,7 @@
 
 namespace PulsarSearch {
 
-integrationConf::integrationConf() : nrThreadsD0(0), nrItemsD0(0) {}
+integrationConf::integrationConf() : KernelConf(), subbandDedispersion(false) {}
 
 integrationConf::~integrationConf() {}
 

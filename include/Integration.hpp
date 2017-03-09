@@ -17,32 +17,26 @@
 #include <vector>
 #include <fstream>
 
+#include <Kernel.hpp>
 #include <Observation.hpp>
 #include <utils.hpp>
 
-#ifndef INTEGRATION_HPP
-#define INTEGRATION_HPP
+#pragma once
 
 namespace PulsarSearch {
 
-class integrationConf {
+class integrationConf : public isa::OpenCL::KernelConf {
 public:
   integrationConf();
   ~integrationConf();
   // Get
-  unsigned int getNrThreadsD0() const;
-  unsigned int getNrItemsD0() const;
   bool getSubbandDedispersion() const;
   // Set
-  void setNrThreadsD0(unsigned int threads);
-  void setNrItemsD0(unsigned int items);
   void setSubbandDedispersion(bool subband);
   // utils
   std::string print() const;
 private:
   bool subbandDedispersion;
-  unsigned int nrThreadsD0;
-  unsigned int nrItemsD0;
 };
 
 typedef std::map< std::string, std::map < unsigned int, std::map< unsigned int, PulsarSearch::integrationConf * > * > * > tunedIntegrationConf;
@@ -58,24 +52,8 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
 
 
 // Implementations
-inline unsigned int integrationConf::getNrThreadsD0() const {
-  return nrThreadsD0;
-}
-
-inline unsigned int integrationConf::getNrItemsD0() const {
-  return nrItemsD0;
-}
-
 inline bool integrationConf::getSubbandDedispersion() const {
   return subbandDedispersion;
-}
-
-inline void integrationConf::setNrThreadsD0(unsigned int threads) {
-  nrThreadsD0 = threads;
-}
-
-inline void integrationConf::setNrItemsD0(unsigned int items) {
-  nrItemsD0 = items;
 }
 
 inline void integrationConf::setSubbandDedispersion(bool subband) {
