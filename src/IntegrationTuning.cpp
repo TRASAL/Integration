@@ -79,7 +79,7 @@ int main(int argc, char * argv[]) {
     }
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
   } catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr << argv[0] << " [-dms_samples | -samples_dms] -iterations ... -opencl_platform ... -opencl_device ... -padding ... -integration ... -min_threads ... -max_threads ... -max_items ... -vector ... [-subband] -beams ... -samples ... -dms ... " << std::endl;
+    std::cerr << argv[0] << " [-dms_samples | -samples_dms] [-best] -iterations ... -opencl_platform ... -opencl_device ... -padding ... -integration ... -min_threads ... -max_threads ... -max_items ... -vector ... [-subband] -beams ... -samples ... -dms ... " << std::endl;
     std::cerr << "\t -subband : -subbanding_dms ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
