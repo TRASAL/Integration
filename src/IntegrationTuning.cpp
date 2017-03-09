@@ -35,6 +35,7 @@ void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue,
 int main(int argc, char * argv[]) {
   bool reInit = false;
   bool DMsSamples = false;
+  bool bestMode = false;
   unsigned int padding = 0;
   unsigned int integration = 0;
   unsigned int nrIterations = 0;
@@ -44,8 +45,10 @@ int main(int argc, char * argv[]) {
   unsigned int maxThreads = 0;
   unsigned int maxItems = 0;
   unsigned int vectorWidth = 0;
+  double bestGFLOPs = 0.0;
   AstroData::Observation observation;
   PulsarSearch::integrationConf conf;
+  PulsarSearch::integrationConf bestConf;
   cl::Event event;
 
   try {
@@ -59,6 +62,7 @@ int main(int argc, char * argv[]) {
     nrIterations = args.getSwitchArgument< unsigned int >("-iterations");
     clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
     clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
+    bestMode = args.getSwitch("-best");
     padding = args.getSwitchArgument< unsigned int >("-padding");
     integration = args.getSwitchArgument< unsigned int >("-integration");
     minThreads = args.getSwitchArgument< unsigned int >("-min_threads");
@@ -111,8 +115,10 @@ int main(int argc, char * argv[]) {
     return -1;
   }
 
-  std::cout << std::fixed << std::endl;
-  std::cout << "# nrBeams nrDMs nrSamples integration *configuration* GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
+  if ( !bestMode ) {
+    std::cout << std::fixed << std::endl;
+    std::cout << "# nrBeams nrDMs nrSamples integration *configuration* GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
+  }
 
   for ( unsigned int threads = minThreads; threads <= maxThreads; threads++) {
     conf.setNrThreadsD0(threads);
@@ -206,18 +212,28 @@ int main(int argc, char * argv[]) {
       }
       delete kernel;
 
-      std::cout << observation.getNrSynthesizedBeams() << " " << observation.getNrDMsSubbanding() * observation.getNrDMs() << " " << observation.getNrSamplesPerBatch() << " " << integration << " ";
-      std::cout << conf.print() << " ";
-      std::cout << std::setprecision(3);
-      std::cout << gflops / timer.getAverageTime() << " ";
-      std::cout << gbs / timer.getAverageTime() << " ";
-      std::cout << std::setprecision(6);
-      std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " ";
-      std::cout << timer.getCoefficientOfVariation() <<  std::endl;
+      if ( (gflops / timer.getAverageTime()) > bestGFLOPs ) {
+        bestGFLOPs = gflops / timer.getAverageTime();
+        bestConf = conf;
+      }
+      if ( !bestMode ) {
+        std::cout << observation.getNrSynthesizedBeams() << " " << observation.getNrDMsSubbanding() * observation.getNrDMs() << " " << observation.getNrSamplesPerBatch() << " " << integration << " ";
+        std::cout << conf.print() << " ";
+        std::cout << std::setprecision(3);
+        std::cout << gflops / timer.getAverageTime() << " ";
+        std::cout << gbs / timer.getAverageTime() << " ";
+        std::cout << std::setprecision(6);
+        std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " ";
+        std::cout << timer.getCoefficientOfVariation() <<  std::endl;
+      }
     }
   }
 
-  std::cout << std::endl;
+  if ( bestMode ) {
+    std::cout << observation.getNrDMsSubbanding() * observation.getNrDMs() << " " << integration << " " << bestConf.print() << std::endl;
+  } else {
+    std::cout << std::endl;
+  }
 
   return 0;
 }
