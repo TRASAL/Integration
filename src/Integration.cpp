@@ -21,7 +21,7 @@ integrationConf::integrationConf() : KernelConf(), subbandDedispersion(false) {}
 integrationConf::~integrationConf() {}
 
 std::string integrationConf::print() const {
-  return std::to_string(subbandDedispersion) + " " + std::to_string(nrThreadsD0) + " " + std::to_string(nrItemsD0);
+  return std::to_string(subbandDedispersion) + " " + isa::OpenCL::KernelConf::print();
 }
 
 void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::string & confFilename) {
