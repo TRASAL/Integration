@@ -2,11 +2,11 @@
 SOURCE_ROOT ?= $(HOME)
 
 # https://github.com/isazi/utils
-UTILS := $(SOURCE_ROOT)/src/utils
+UTILS := $(SOURCE_ROOT)/utils
 # https://github.com/isazi/OpenCL
-OPENCL := $(SOURCE_ROOT)/src/OpenCL
+OPENCL := $(SOURCE_ROOT)/OpenCL
 # https://github.com/isazi/AstroData
-ASTRODATA := $(SOURCE_ROOT)/src/AstroData
+ASTRODATA := $(SOURCE_ROOT)/AstroData
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include"
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
