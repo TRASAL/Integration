@@ -45,7 +45,7 @@ bin/IntegrationTuning: $(CL_DEPS) src/IntegrationTuning.cpp
 
 bin/printCode: $(DEPS) src/printCode.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/printCode src/printCode.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/printCode src/printCode.cpp $(DEPS) $(CL_INCLUDES) $(LDFLAGS) $(CFLAGS)
 
 test: bin/IntegrationTest bin/printCode
 	echo "Example kernel:"
