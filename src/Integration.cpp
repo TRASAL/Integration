@@ -34,7 +34,7 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
 
   confFile.open(confFilename);
   if ( !confFile ) {
-    throw FileError("Impossible to open " + confFilename);
+    throw AstroData::FileError("Impossible to open " + confFilename);
   }
   while ( ! confFile.eof() ) {
     unsigned int splitPoint = 0;
