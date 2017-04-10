@@ -60,8 +60,6 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
     splitPoint = temp.find(" ");
     parameters->setNrThreadsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
     temp = temp.substr(splitPoint + 1);
-    parameters->setNrThreadsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
-    temp = temp.substr(splitPoint + 1);
     splitPoint = temp.find(" ");
     parameters->setNrThreadsD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
     temp = temp.substr(splitPoint + 1);
