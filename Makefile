@@ -34,3 +34,8 @@ clean:
 	-@rm bin/*
 	-@rm lib/*
 
+install: all
+	-@cp include/Integration.hpp $(INSTALL_ROOT)/include
+	-@cp lib/* $(INSTALL_ROOT)/lib
+	-@cp bin/IntegrationTest $(INSTALL_ROOT)/bin
+	-@cp bin/IntegrationTuning $(INSTALL_ROOT)/bin
