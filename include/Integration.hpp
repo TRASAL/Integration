@@ -1,4 +1,5 @@
-// Copyright 2015 Alessio Sclocco <a.sclocco@vu.nl>
+// Copyright 2017 Netherlands Institute for Radio Astronomy (ASTRON)
+// Copyright 2017 Netherlands eScience Center
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,7 +66,7 @@ template< typename T > void integrationDMsSamples(const bool subbandDedispersion
   unsigned int nrDMs = 0;
 
   if ( subbandDedispersion ) {
-    nrDMs = observation.getNrDMsSubbanding() * observation.getNrDMs();
+    nrDMs = observation.getNrDMs(true) * observation.getNrDMs();
   } else {
     nrDMs = observation.getNrDMs();
   }
@@ -76,7 +77,7 @@ template< typename T > void integrationDMsSamples(const bool subbandDedispersion
         T integratedSample = 0;
 
         for ( unsigned int i = 0; i < integration; i++ ) {
-          integratedSample += input[(beam * nrDMs * observation.getNrSamplesPerPaddedBatch(padding / sizeof(T))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(T))) + (sample + i)];
+          integratedSample += input[(beam * nrDMs * observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + (sample + i)];
         }
         output[(beam * nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + (sample / integration)] = integratedSample / integration;
       }
@@ -88,7 +89,7 @@ template< typename T > void integrationSamplesDMs(const bool subbandDedispersion
   unsigned int nrDMs = 0;
 
   if ( subbandDedispersion ) {
-    nrDMs = observation.getNrDMsSubbanding() * observation.getNrDMs();
+    nrDMs = observation.getNrDMs(true) * observation.getNrDMs();
   } else {
     nrDMs = observation.getNrDMs();
   }
@@ -111,7 +112,7 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
   std::string * code = new std::string();
 
   if ( conf.getSubbandDedispersion() ) {
-    nrDMs = observation.getNrDMsSubbanding() * observation.getNrDMs();
+    nrDMs = observation.getNrDMs(true) * observation.getNrDMs();
   } else {
     nrDMs = observation.getNrDMs();
   }
@@ -120,7 +121,7 @@ template< typename T > std::string * getIntegrationDMsSamplesOpenCL(const integr
     "unsigned int beam = get_group_id(2);\n"
     "unsigned int dm = get_group_id(1);\n"
     "__local " + dataName + " buffer[" + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0()) + "];\n"
-    "unsigned int inGlobalMemory = (beam * " + std::to_string(nrDMs * observation.getNrSamplesPerPaddedBatch(padding / sizeof(T))) + ") + (dm * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(integration * conf.getNrItemsD0()) + ");\n"
+    "unsigned int inGlobalMemory = (beam * " + std::to_string(nrDMs * observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + ") + (dm * " + std::to_string(observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(integration * conf.getNrItemsD0()) + ");\n"
     "<%DEFS%>"
     "\n"
     "// First computing phase\n"
@@ -214,7 +215,7 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
   std::string * code = new std::string();
 
   if ( conf.getSubbandDedispersion() ) {
-    nrDMs = observation.getNrDMsSubbanding() * observation.getNrDMs();
+    nrDMs = observation.getNrDMs(true) * observation.getNrDMs();
   } else {
     nrDMs = observation.getNrDMs();
   }
