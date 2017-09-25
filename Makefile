@@ -1,7 +1,7 @@
 
 INSTALL_ROOT ?= $(HOME)
 INCLUDES := -I"include" -I"$(INSTALL_ROOT)/include"
-CL_LIBS := -L"$(INSTALL_ROOT)/lib"
+LIBS := -L"$(INSTALL_ROOT)/lib"
 
 CC := g++
 CFLAGS := -std=c++11 -Wall
