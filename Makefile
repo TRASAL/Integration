@@ -14,7 +14,7 @@ else
 endif
 
 
-all: bin/Integration.o bin/IntegrationTest bin/IntegrationTuning bin/printCode
+all: bin/Integration.o bin/IntegrationTest bin/IntegrationTuning
 	-@mkdir -p lib
 	$(CC) -o lib/libIntegration.so -shared -Wl,-soname,libIntegration.so bin/Integration.o $(CFLAGS)
 
