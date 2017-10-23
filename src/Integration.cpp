@@ -15,7 +15,7 @@
 
 #include <Integration.hpp>
 
-namespace PulsarSearch {
+namespace Integration {
 
 integrationConf::integrationConf() : KernelConf(), subbandDedispersion(false) {}
 
@@ -30,7 +30,7 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
   unsigned int integration = 0;
   std::string temp;
   std::string deviceName;
-  PulsarSearch::integrationConf * parameters = 0;
+  Integration::integrationConf * parameters = 0;
   std::ifstream confFile;
 
   confFile.open(confFilename);
@@ -44,7 +44,7 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
     if ( ! std::isalpha(temp[0]) ) {
       continue;
     }
-    parameters = new PulsarSearch::integrationConf();
+    parameters = new Integration::integrationConf();
 
     splitPoint = temp.find(" ");
     deviceName = temp.substr(0, splitPoint);
@@ -76,14 +76,14 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
     parameters->setNrItemsD2(isa::utils::castToType< std::string, unsigned int >(temp));
 
     if ( tunedConf.count(deviceName) == 0 ) {
-      std::map< unsigned int, std::map< unsigned int, PulsarSearch::integrationConf * > * >  * externalContainer = new std::map< unsigned int, std::map< unsigned int, PulsarSearch::integrationConf * > * >();
-      std::map< unsigned int, PulsarSearch::integrationConf * > * internalContainer = new std::map< unsigned int, PulsarSearch::integrationConf * >();
+      std::map< unsigned int, std::map< unsigned int, Integration::integrationConf * > * >  * externalContainer = new std::map< unsigned int, std::map< unsigned int, Integration::integrationConf * > * >();
+      std::map< unsigned int, Integration::integrationConf * > * internalContainer = new std::map< unsigned int, Integration::integrationConf * >();
 
       internalContainer->insert(std::make_pair(integration, parameters));
       externalContainer->insert(std::make_pair(dim0, internalContainer));
       tunedConf.insert(std::make_pair(deviceName, externalContainer));
     } else if ( tunedConf.at(deviceName)->count(dim0) == 0 ) {
-      std::map< unsigned int, PulsarSearch::integrationConf * > * internalContainer = new std::map< unsigned int, PulsarSearch::integrationConf * >();
+      std::map< unsigned int, Integration::integrationConf * > * internalContainer = new std::map< unsigned int, Integration::integrationConf * >();
 
       internalContainer->insert(std::make_pair(integration, parameters));
       tunedConf.at(deviceName)->insert(std::make_pair(dim0, internalContainer));
@@ -94,5 +94,5 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
   confFile.close();
 }
 
-} // PulsarSearch
+} // Integration
 

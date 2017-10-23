@@ -47,8 +47,8 @@ int main(int argc, char * argv[]) { bool reInit = false;
   unsigned int vectorWidth = 0;
   double bestGFLOPs = 0.0;
   AstroData::Observation observation;
-  PulsarSearch::integrationConf conf;
-  PulsarSearch::integrationConf bestConf;
+  Integration::integrationConf conf;
+  Integration::integrationConf bestConf;
   cl::Event event;
 
   try {
@@ -146,9 +146,9 @@ int main(int argc, char * argv[]) { bool reInit = false;
 
       std::string * code;
       if ( DMsSamples ) {
-        code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
+        code = Integration::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
       } else {
-        code = PulsarSearch::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+        code = Integration::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
       }
       if ( reInit ) {
         delete clQueues;

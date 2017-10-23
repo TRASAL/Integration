@@ -25,7 +25,7 @@
 
 #pragma once
 
-namespace PulsarSearch {
+namespace Integration {
 
 class integrationConf : public isa::OpenCL::KernelConf {
 public:

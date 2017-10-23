@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CONFIGURATION_INTEGRATION_HPP
-#define CONFIGURATION_INTEGRATION_HPP
+#pragma once
 
 // Define the data types
 typedef float dataType;
 std::string dataName("float");
-
-#endif // CONFIGURATION_INTEGRATION_HPP
 

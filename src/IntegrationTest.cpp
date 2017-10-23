@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
   unsigned int clPlatformID = 0;
   unsigned int clDeviceID = 0;
   uint64_t wrongSamples = 0;
-  PulsarSearch::integrationConf conf;
+  Integration::integrationConf conf;
   AstroData::Observation observation;
 
   try {
@@ -177,9 +177,9 @@ int main(int argc, char *argv[]) {
   // Generate kernel
   std::string * code;
   if ( DMsSamples ) {
-    code = PulsarSearch::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
+    code = Integration::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
   } else {
-    code = PulsarSearch::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+    code = Integration::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
   }
   cl::Kernel * kernel;
   if ( printCode ) {
@@ -213,9 +213,9 @@ int main(int argc, char *argv[]) {
     kernel->setArg(1, output_d);
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
     if ( DMsSamples ) {
-      PulsarSearch::integrationDMsSamples(conf.getSubbandDedispersion(), observation, integration, padding, input, output_control);
+      Integration::integrationDMsSamples(conf.getSubbandDedispersion(), observation, integration, padding, input, output_control);
     } else {
-      PulsarSearch::integrationSamplesDMs(conf.getSubbandDedispersion(), observation, integration, padding, input, output_control);
+      Integration::integrationSamplesDMs(conf.getSubbandDedispersion(), observation, integration, padding, input, output_control);
     }
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(dataType), reinterpret_cast< void * >(output.data()));
   } catch ( cl::Error & err ) {
