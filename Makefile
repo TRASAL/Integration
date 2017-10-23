@@ -35,7 +35,10 @@ clean:
 	-@rm lib/*
 
 install: all
+	-@mkdir -p $(INSTALL_ROOT)/include
 	-@cp include/Integration.hpp $(INSTALL_ROOT)/include
+	-@mkdir -p $(INSTALL_ROOT)/lib
 	-@cp lib/* $(INSTALL_ROOT)/lib
+	-@mkdir -p $(INSTALL_ROOT)/bin
 	-@cp bin/IntegrationTest $(INSTALL_ROOT)/bin
 	-@cp bin/IntegrationTuning $(INSTALL_ROOT)/bin
