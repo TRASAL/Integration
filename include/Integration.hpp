@@ -41,7 +41,7 @@ private:
   bool subbandDedispersion;
 };
 
-typedef std::map< std::string, std::map < unsigned int, std::map< unsigned int, PulsarSearch::integrationConf * > * > * > tunedIntegrationConf;
+typedef std::map< std::string, std::map < unsigned int, std::map< unsigned int, Integration::integrationConf * > * > * > tunedIntegrationConf;
 
 // Sequential
 template< typename T > void integrationDMsSamples(const bool subbandDedispersion, const AstroData::Observation & observation, const unsigned int integration, const unsigned int padding, const std::vector< T > & input, std::vector< T > & output);
@@ -284,5 +284,5 @@ template< typename T > std::string * getIntegrationSamplesDMsOpenCL(const integr
   return code;
 }
 
-} // PulsarSearch
+} // Integration
 
