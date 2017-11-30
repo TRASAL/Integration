@@ -33,7 +33,8 @@
 
 void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, cl::Buffer * input_d, const unsigned int input_size, cl::Buffer * output_d, const unsigned int output_size);
 
-int main(int argc, char * argv[]) { bool reInit = false;
+int main(int argc, char * argv[]) {
+  bool reinitializeDeviceMemory = true;
   bool DMsSamples = false;
   bool bestMode = false;
   unsigned int padding = 0;
@@ -97,23 +98,12 @@ int main(int argc, char * argv[]) { bool reInit = false;
     output = std::vector< dataType >(observation.getNrSynthesizedBeams() * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(dataType)));
   }
 
-  // Initialize OpenCL
   cl::Context clContext;
   std::vector< cl::Platform > * clPlatforms = new std::vector< cl::Platform >();
   std::vector< cl::Device > * clDevices = new std::vector< cl::Device >();
   std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
-  isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
-
-  // Allocate device memory
   cl::Buffer input_d;
   cl::Buffer output_d;
-
-  try {
-    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input.size(), &output_d, output.size());
-  } catch ( cl::Error & err ) {
-    std::cerr << err.what() << std::endl;
-    return -1;
-  }
 
   if ( !bestMode ) {
     std::cout << std::fixed << std::endl;
@@ -150,7 +140,7 @@ int main(int argc, char * argv[]) { bool reInit = false;
       } else {
         code = Integration::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
       }
-      if ( reInit ) {
+      if ( reinitializeDeviceMemory ) {
         delete clQueues;
         clQueues = new std::vector< std::vector < cl::CommandQueue > >();
         isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
@@ -161,7 +151,7 @@ int main(int argc, char * argv[]) { bool reInit = false;
           std::cerr << std::to_string(err.err()) << "." << std::endl;
           return -1;
         }
-        reInit = false;
+        reinitializeDeviceMemory = false;
       }
       try {
         if ( DMsSamples ) {
@@ -207,7 +197,7 @@ int main(int argc, char * argv[]) { bool reInit = false;
         if ( err.err() == -4 || err.err() == -61 ) {
           return -1;
         }
-        reInit = true;
+        reinitializeDeviceMemory = true;
         break;
       }
       delete kernel;
