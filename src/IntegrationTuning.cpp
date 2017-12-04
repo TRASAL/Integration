@@ -110,8 +110,13 @@ int main(int argc, char * argv[]) {
     std::cout << "# nrBeams nrDMs nrSamples integration *configuration* GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
   }
 
-  for ( unsigned int threads = minThreads; threads <= maxThreads; threads *= 2) {
+  for ( unsigned int threads = minThreads; threads <= maxThreads; ) {
     conf.setNrThreadsD0(threads);
+    if ( DMsSamples ) {
+      threads *= 2;
+    } else {
+      threads++;
+    }
     if ( conf.getNrThreadsD0() % vectorWidth != 0 ) {
       continue;
     }
