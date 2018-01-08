@@ -35,7 +35,7 @@ bin/IntegrationTest: src/IntegrationTest.cpp
 
 bin/IntegrationTuning: src/IntegrationTuning.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/IntegrationTuning src/IntegrationTuning.cpp bin/Integration.o $(DADA_DEPS0 $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/IntegrationTuning src/IntegrationTuning.cpp bin/Integration.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
