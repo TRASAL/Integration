@@ -14,11 +14,8 @@ else
 endif
 
 ifdef PSRDADA
-	DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o $(PSRDADA)/src/tmutil.o
-	INCLUDES += -I"$(PSRDADA)/src"
 	CFLAGS += -DHAVE_PSRDADA
-else
-	DADA_DEPS :=
+	LDFLAGS += -lpsrdada -lcudart
 endif
 
 all: bin/Integration.o bin/IntegrationTest bin/IntegrationTuning
@@ -31,11 +28,11 @@ bin/Integration.o: include/Integration.hpp src/Integration.cpp
 
 bin/IntegrationTest: src/IntegrationTest.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/IntegrationTest src/IntegrationTest.cpp bin/Integration.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/IntegrationTest src/IntegrationTest.cpp bin/Integration.o $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 bin/IntegrationTuning: src/IntegrationTuning.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/IntegrationTuning src/IntegrationTuning.cpp bin/Integration.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/IntegrationTuning src/IntegrationTuning.cpp bin/Integration.o $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
