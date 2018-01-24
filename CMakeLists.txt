@@ -17,7 +17,7 @@ endif()
 add_library(integration SHARED
   src/Integration.cpp
 )
-set_target_properties(integration PROPERTIES 
+set_target_properties(integration PROPERTIES
   VERSION ${PROJECT_VERSION}
   SOVERSION 1
   PUBLIC_HEADER "include/Integration.hpp"
