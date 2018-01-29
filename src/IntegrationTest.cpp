@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
     input_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, input.size() * sizeof(dataType), 0, 0);
     output_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, output.size() * sizeof(dataType), 0, 0);
   } catch ( cl::Error & err ) {
-    std::cerr << "OpenCL error allocating memory: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
+    std::cerr << "OpenCL error allocating memory: " << std::to_string(err.err()) << "." << std::endl;
     return 1;
   }
 
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
   try {
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(input_d, CL_FALSE, 0, input.size() * sizeof(dataType), reinterpret_cast< void * >(input.data()), 0, 0);
   } catch ( cl::Error & err ) {
-    std::cerr << "OpenCL error H2D transfer: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
+    std::cerr << "OpenCL error H2D transfer: " << std::to_string(err.err()) << "." << std::endl;
     return 1;
   }
 
@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
     }
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(dataType), reinterpret_cast< void * >(output.data()));
   } catch ( cl::Error & err ) {
-    std::cerr << "OpenCL error kernel execution: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
+    std::cerr << "OpenCL error kernel execution: " << std::to_string(err.err()) << "." << std::endl;
     return 1;
   }
 

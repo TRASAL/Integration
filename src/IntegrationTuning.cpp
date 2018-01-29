@@ -28,7 +28,6 @@
 #include <utils.hpp>
 #include <Integration.hpp>
 #include <Timer.hpp>
-#include <Stats.hpp>
 
 
 void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, cl::Buffer * input_d, const unsigned int input_size, cl::Buffer * output_d, const unsigned int output_size);
