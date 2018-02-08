@@ -14,6 +14,11 @@ if($ENV{PSRDADA})
   set(TARGET_LINK_LIBRARIES ${TARGET_LINK_LIBRARIES} psrdada cudart)
 endif()
 
+set(INTEGRATION_HEADER
+  include/configuration.hpp
+  include/Integration.hpp
+)
+
 # libintegration
 add_library(integration SHARED
   src/Integration.cpp
@@ -28,6 +33,7 @@ target_include_directories(integration PRIVATE include)
 # IntegrationTesting
 add_executable(IntegrationTesting
   src/IntegrationTest.cpp
+  ${INTEGRATION_HEADER}
 )
 target_include_directories(IntegrationTesting PRIVATE include)
 target_link_libraries(IntegrationTesting PRIVATE ${TARGET_LINK_LIBRARIES})
@@ -35,6 +41,7 @@ target_link_libraries(IntegrationTesting PRIVATE ${TARGET_LINK_LIBRARIES})
 # IntegrationTuning
 add_executable(IntegrationTuning
   src/IntegrationTuning.cpp
+  ${INTEGRATION_HEADER}
 )
 target_include_directories(IntegrationTuning PRIVATE include)
 target_link_libraries(IntegrationTuning PRIVATE ${TARGET_LINK_LIBRARIES})
