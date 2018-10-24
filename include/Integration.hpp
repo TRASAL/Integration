@@ -381,7 +381,7 @@ std::string *getIntegrationAfterDedispersionInPlaceOpenCL(const integrationConf 
     {
         nrDMs = observation.getNrDMs();
     }
-    return getIntegrationInPlaceOpenCL<NumericType>(conf, observation, dataName, nrDMs, observation.getNrSamplesPerBatch(conf.getSubbandDedispersion()), integration, padding);
+    return getIntegrationInPlaceOpenCL<NumericType>(conf, observation, dataName, nrDMs, observation.getNrSamplesPerBatch(), integration, padding);
 }
 
 template<typename NumericType>
