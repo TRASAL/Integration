@@ -57,9 +57,9 @@ std::string *getIntegrationDMsSamplesOpenCL(const integrationConf &conf, const A
 template <typename T>
 std::string *getIntegrationSamplesDMsOpenCL(const integrationConf &conf, const AstroData::Observation &observation, const std::string &inputDataName, const unsigned int integration, const unsigned int padding);
 template<typename NumericType>
-std::string *getIntegrationChannelsSamplesInPlaceOpenCL(const integrationConf &conf, const AstroData::Observation &observation, const std::string &dataName, const unsigned int integration, const unsigned int padding);
+std::string *getIntegrationBeforeDedispersionInPlaceOpenCL(const integrationConf &conf, const AstroData::Observation &observation, const std::string &dataName, const unsigned int integration, const unsigned int padding);
 template<typename NumericType>
-std::string *getIntegrationDMsSamplesInPlaceOpenCL(const integrationConf &conf, const AstroData::Observation &observation, const std::string &dataName, const unsigned int integration, const unsigned int padding);
+std::string *getIntegrationAfterDedispersionInPlaceOpenCL(const integrationConf &conf, const AstroData::Observation &observation, const std::string &dataName, const unsigned int integration, const unsigned int padding);
 template<typename NumericType>
 std::string *getIntegrationInPlaceOpenCL(const integrationConf &conf, const AstroData::Observation &observation, const std::string &dataName, const unsigned int dimOneSize, const unsigned int dimZeroSize, const unsigned int integration, const unsigned int padding);
 // Read configuration files
@@ -360,6 +360,28 @@ std::string *getIntegrationSamplesDMsOpenCL(const integrationConf &conf, const A
     delete store_s;
 
     return code;
+}
+
+template<typename NumericType>
+std::string *getIntegrationBeforeDedispersionInPlaceOpenCL(const integrationConf &conf, const AstroData::Observation &observation, const std::string &dataName, const unsigned int integration, const unsigned int padding)
+{
+    return getIntegrationInPlaceOpenCL<NumericType>(conf, observation, dataName, observation.getNrChannels(), observation.getNrSamplesPerDispersedBatch(conf.getSubbandDedispersion()), integration, padding);
+}
+
+template<typename NumericType>
+std::string *getIntegrationAfterDedispersionInPlaceOpenCL(const integrationConf &conf, const AstroData::Observation &observation, const std::string &dataName, const unsigned int integration, const unsigned int padding)
+{
+    unsigned int nrDMs = 0;
+
+    if ( conf.getSubbandDedispersion() )
+    {
+        nrDMs = observation.getNrDMs(true) * observation.getNrDMs();
+    }
+    else
+    {
+        nrDMs = observation.getNrDMs();
+    }
+    return getIntegrationInPlaceOpenCL<NumericType>(conf, observation, dataName, nrDMs, observation.getNrSamplesPerBatch(conf.getSubbandDedispersion()), integration, padding);
 }
 
 template<typename NumericType>
