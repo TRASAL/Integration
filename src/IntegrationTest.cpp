@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
   bool printResults = false;
   bool random = false;
   bool DMsSamples = false;
+  bool inPlace = false;
   unsigned int padding = 0;
   unsigned int integration = 0;
   unsigned int clPlatformID = 0;
@@ -50,6 +51,7 @@ int main(int argc, char *argv[]) {
       std::cerr << "-dms_samples and -samples_dms are mutually exclusive." << std::endl;
       return 1;
     }
+    inPlace = args.getSwitch("-in_place");
     printCode = args.getSwitch("-print_code");
     printResults = args.getSwitch("-print_results");
     random = args.getSwitch("-random");
@@ -72,8 +74,8 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   } catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-dms_samples | -samples_dms] [-print_code] [-print_results] [-random] -opencl_platform ... -opencl_device ... -padding ... -integration ... -threadsD0 ... -itemsD0 ... [-subband] -beams ... -samples ... -dms ..." << std::endl;
-    std::cerr << " -subband : -subbanding_dms ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-dms_samples | -samples_dms] [-print_code] [-print_results] [-random] -opencl_platform ... -opencl_device ... -padding ... -integration ... -threadsD0 ... -itemsD0 ... [-in_place] [-subband] -beams ... -samples ... -dms ..." << std::endl;
+    std::cerr << " -subband -subbanding_dms ..." << std::endl;
     return 1;
   }
 
@@ -92,11 +94,19 @@ int main(int argc, char *argv[]) {
   std::vector< dataType > output;
   std::vector< dataType > output_control;
 
-  if ( DMsSamples ) {
+  if ( DMsSamples )
+  {
     input.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(dataType)));
     output.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType)));
     output_control.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType)));
-  } else {
+  }
+  else if ( inPlace )
+  {
+    input.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(dataType)));
+    output_control.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType)));
+  }
+  else 
+  {
     input.resize(observation.getNrSynthesizedBeams() * observation.getNrSamplesPerBatch() * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(dataType)));
     output.resize(observation.getNrSynthesizedBeams() * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(dataType)));
     output_control.resize(observation.getNrSynthesizedBeams() * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(dataType)));
@@ -104,7 +114,10 @@ int main(int argc, char *argv[]) {
 
   try {
     input_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, input.size() * sizeof(dataType), 0, 0);
-    output_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, output.size() * sizeof(dataType), 0, 0);
+    if ( !inPlace )
+    {
+      output_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, output.size() * sizeof(dataType), 0, 0);
+    }
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error allocating memory: " << std::to_string(err.err()) << "." << std::endl;
     return 1;
@@ -176,9 +189,16 @@ int main(int argc, char *argv[]) {
 
   // Generate kernel
   std::string * code;
-  if ( DMsSamples ) {
+  if ( DMsSamples )
+  {
     code = Integration::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
-  } else {
+  }
+  else if ( inPlace )
+  {
+    code = Integration::getIntegrationAfterDedispersionInPlaceOpenCL<dataType>(conf, observation, dataName, integration, padding);
+  }
+  else
+  {
     code = Integration::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
   }
   cl::Kernel * kernel;
@@ -186,9 +206,16 @@ int main(int argc, char *argv[]) {
     std::cout << *code << std::endl;
   }
   try {
-    if ( DMsSamples ) {
+    if ( DMsSamples )
+    {
       kernel = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
-    } else {
+    }
+    else if ( inPlace )
+    {
+      kernel = isa::OpenCL::compile("integration" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+    }
+    else
+    {
       kernel = isa::OpenCL::compile("integrationSamplesDMs" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
     }
   } catch ( isa::OpenCL::OpenCLError & err ) {
@@ -201,23 +228,44 @@ int main(int argc, char *argv[]) {
     cl::NDRange global;
     cl::NDRange local;
 
-    if ( DMsSamples ) {
+    if ( DMsSamples || inPlace )
+    {
+      Integration::integrationDMsSamples(conf.getSubbandDedispersion(), observation, integration, padding, input, output_control);
+    }
+    else
+    {
+      Integration::integrationSamplesDMs(conf.getSubbandDedispersion(), observation, integration, padding, input, output_control);
+    }
+    if ( DMsSamples )
+    {
       global = cl::NDRange(conf.getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / integration) / conf.getNrItemsD0()), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
       local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
-    } else {
+    }
+    else if ( inPlace )
+    {
+      global = cl::NDRange(conf.getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+      local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
+    }
+    else
+    {
       global = cl::NDRange((observation.getNrDMs(true) * observation.getNrDMs()) / conf.getNrItemsD0(), observation.getNrSamplesPerBatch() / integration, observation.getNrSynthesizedBeams());
       local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
     }
 
     kernel->setArg(0, input_d);
-    kernel->setArg(1, output_d);
-    clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
-    if ( DMsSamples ) {
-      Integration::integrationDMsSamples(conf.getSubbandDedispersion(), observation, integration, padding, input, output_control);
-    } else {
-      Integration::integrationSamplesDMs(conf.getSubbandDedispersion(), observation, integration, padding, input, output_control);
+    if ( !inPlace )
+    {
+      kernel->setArg(1, output_d);
     }
-    clQueues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(dataType), reinterpret_cast< void * >(output.data()));
+    clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
+    if ( inPlace )
+    {
+      clQueues->at(clDeviceID)[0].enqueueReadBuffer(input_d, CL_TRUE, 0, input.size() * sizeof(dataType), reinterpret_cast< void * >(input.data()));
+    }
+    else
+    {
+      clQueues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(dataType), reinterpret_cast< void * >(output.data()));
+    }
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error kernel execution: " << std::to_string(err.err()) << "." << std::endl;
     return 1;
@@ -227,7 +275,8 @@ int main(int argc, char *argv[]) {
     if ( printResults ) {
       std::cout << "Beam: " << beam << std::endl;
     }
-    if ( DMsSamples ) {
+    if ( DMsSamples )
+    {
       for ( unsigned int subbandDM = 0; subbandDM < observation.getNrDMs(true); subbandDM++ ) {
         for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
           if ( printResults ) {
@@ -243,7 +292,27 @@ int main(int argc, char *argv[]) {
           }
         }
       }
-    } else {
+    }
+    else if ( inPlace )
+    {
+      for ( unsigned int subbandDM = 0; subbandDM < observation.getNrDMs(true); subbandDM++ ) {
+        for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+          if ( printResults ) {
+            std::cout << "DM: " << (subbandDM * observation.getNrDMs()) + dm << " -- ";
+          }
+          for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / integration; sample++ ) {
+            if ( !isa::utils::same(output_control[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + sample], input[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + sample]) ) {
+              wrongSamples++;
+            }
+            if ( printResults ) {
+              std::cout << output_control[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + sample] << "," << input[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + sample] << " ";
+            }
+          }
+        }
+      }
+    }
+    else
+    {
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / integration; sample++ ) {
       if ( printResults ) {
         std::cout << "Sample: " << sample << " -- ";
