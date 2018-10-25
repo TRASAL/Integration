@@ -301,7 +301,10 @@ int main(int argc, char *argv[]) {
               std::cout << output_control[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + sample] << "," << output[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + sample] << " ";
             }
           }
-          std::cout << std::endl;
+          if ( printResults )
+          {
+            std::cout << std::endl;
+          }
         }
       }
     }
@@ -320,7 +323,10 @@ int main(int argc, char *argv[]) {
               std::cout << output_control[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + sample] << "," << input[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType))) + sample] << " ";
             }
           }
-          std::cout << std::endl;
+          if ( printResults )
+          {
+            std::cout << std::endl;
+          }
         }
       }
     }
@@ -340,7 +346,10 @@ int main(int argc, char *argv[]) {
             }
           }
         }
-        std::cout << std::endl;
+        if ( printResults )
+          {
+            std::cout << std::endl;
+          }
       }
     }
   }
