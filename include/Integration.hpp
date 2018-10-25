@@ -411,7 +411,7 @@ std::string *getIntegrationInPlaceOpenCL(const integrationConf &conf, const Astr
     "}\n";
     std::string defs_sTemplate = dataName + " integratedSample<%NUM%> = 0;\n";
     std::string sum_sTemplate = "integratedSample<%NUM%> += buffer[(get_local_id(0) * " + std::to_string(integration) + ") + <%OFFSET%> + item];\n";
-    std::string store_sTemplate = "data[inGlobalMemory + <%OFFSET%>] = integratedSample<%NUM%> / " + std::to_string(integration) + ";\n";
+    std::string store_sTemplate = "data[inGlobalMemory + get_local_id(0) + <%OFFSET%>] = integratedSample<%NUM%> / " + std::to_string(integration) + ";\n";
     // End kernel's template
 
     std::string *defs_s = new std::string();
