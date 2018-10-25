@@ -45,13 +45,16 @@ int main(int argc, char *argv[]) {
 
   try {
     isa::utils::ArgumentList args(argc, argv);
-    DMsSamples = args.getSwitch("-dms_samples");
-    bool samplesDMs = args.getSwitch("-samples_dms");
-    if ( (DMsSamples && samplesDMs) || (!DMsSamples && !samplesDMs) ) {
-      std::cerr << "-dms_samples and -samples_dms are mutually exclusive." << std::endl;
-      return 1;
-    }
     inPlace = args.getSwitch("-in_place");
+    if ( !inPlace )
+    {
+      DMsSamples = args.getSwitch("-dms_samples");
+      bool samplesDMs = args.getSwitch("-samples_dms");
+      if ( (DMsSamples && samplesDMs) || (!DMsSamples && !samplesDMs) ) {
+        std::cerr << "-dms_samples and -samples_dms are mutually exclusive." << std::endl;
+        return 1;
+      }
+    }
     printCode = args.getSwitch("-print_code");
     printResults = args.getSwitch("-print_results");
     random = args.getSwitch("-random");
