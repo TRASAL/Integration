@@ -400,7 +400,7 @@ std::string *getIntegrationInPlaceOpenCL(const integrationConf &conf, const Astr
     "buffer[item] = data[inGlobalMemory + item];\n"
     "}\n"
     "barrier(CLK_LOCAL_MEM_FENCE);\n"
-    "// Integrate samples"
+    "// Integrate samples\n"
     "for ( " + conf.getIntType() + " item = 0; item < " + std::to_string(integration) + "; item++ ) {\n"
     "<%SUMS%>"
     "}\n"
