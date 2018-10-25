@@ -35,6 +35,7 @@ void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue,
 int main(int argc, char * argv[]) {
   bool reinitializeDeviceMemory = true;
   bool DMsSamples = false;
+  bool inPlace = false;
   bool bestMode = false;
   unsigned int padding = 0;
   unsigned int integration = 0;
@@ -53,11 +54,15 @@ int main(int argc, char * argv[]) {
 
   try {
     isa::utils::ArgumentList args(argc, argv);
-    DMsSamples = args.getSwitch("-dms_samples");
-    bool samplesDMs = args.getSwitch("-samples_dms");
-    if ( (DMsSamples && samplesDMs) || (!DMsSamples && !samplesDMs) ) {
-      std::cerr << "-dms_samples and -samples_dms are mutually exclusive." << std::endl;
-      return 1;
+    inPlace = args.getSwitch("-in_place");
+    if ( !inPlace )
+    {
+      DMsSamples = args.getSwitch("-dms_samples");
+      bool samplesDMs = args.getSwitch("-samples_dms");
+      if ( (DMsSamples && samplesDMs) || (!DMsSamples && !samplesDMs) ) {
+        std::cerr << "-dms_samples and -samples_dms are mutually exclusive." << std::endl;
+        return 1;
+      }
     }
     nrIterations = args.getSwitchArgument< unsigned int >("-iterations");
     clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
@@ -89,10 +94,17 @@ int main(int argc, char * argv[]) {
 
   // Allocate host memory
   std::vector< dataType > input, output;
-  if ( DMsSamples ) {
+  if ( inPlace )
+  {
+    input = std::vector<dataType>(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(dataType)));
+  }
+  else if ( DMsSamples )
+  {
     input = std::vector< dataType >(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(dataType)));
     output = std::vector< dataType >(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType)));
-  } else {
+  }
+  else
+  {
     input = std::vector< dataType >(observation.getNrSynthesizedBeams() * observation.getNrSamplesPerBatch() * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(dataType)));
     output = std::vector< dataType >(observation.getNrSynthesizedBeams() * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(dataType)));
   }
@@ -109,116 +121,154 @@ int main(int argc, char * argv[]) {
     std::cout << "# nrBeams nrDMs nrSamples integration *configuration* GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
   }
 
-  for ( unsigned int threads = minThreads; threads <= maxThreads; ) {
+  for ( unsigned int threads = minThreads; threads <= maxThreads; )
+  {
     conf.setNrThreadsD0(threads);
-    if ( DMsSamples ) {
+    if ( DMsSamples || inPlace )
+    {
       threads *= 2;
-    } else {
+    }
+    else
+    {
       threads++;
     }
-    if ( conf.getNrThreadsD0() % vectorWidth != 0 ) {
+    if ( conf.getNrThreadsD0() % vectorWidth != 0 )
+    {
       continue;
     }
-
-    for ( unsigned int itemsPerThread = 1; itemsPerThread <= maxItems; itemsPerThread++ ) {
+    for ( unsigned int itemsPerThread = 1; itemsPerThread <= maxItems; itemsPerThread++ )
+    {
       conf.setNrItemsD0(itemsPerThread);
-      if ( DMsSamples ) {
-        if ( (observation.getNrSamplesPerBatch() % (integration * conf.getNrItemsD0())) != 0 ) {
-          continue;
-        }
-      } else {
-        if ( observation.getNrDMs() % (conf.getNrThreadsD0() * conf.getNrItemsD0()) != 0 ) {
+      if ( DMsSamples || inPlace )
+      {
+        if ( (observation.getNrSamplesPerBatch() % (integration * conf.getNrItemsD0())) != 0 )
+        {
           continue;
         }
       }
-
-      // Generate kernel
-      double gflops = isa::utils::giga(observation.getNrSynthesizedBeams() * static_cast< uint64_t >(observation.getNrDMs(true) * observation.getNrDMs()) * observation.getNrSamplesPerBatch());
-      double gbs = isa::utils::giga((observation.getNrSynthesizedBeams() * static_cast< uint64_t >(observation.getNrDMs(true) * observation.getNrDMs()) * observation.getNrSamplesPerBatch()) + (observation.getNrSynthesizedBeams() * static_cast< uint64_t >(observation.getNrDMs(true) * observation.getNrDMs()) * (observation.getNrSamplesPerBatch() / integration)));
-      isa::utils::Timer timer;
-      cl::Kernel * kernel;
-
-      std::string * code;
-      if ( DMsSamples ) {
-        code = Integration::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
-      } else {
-        code = Integration::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+      else
+      {
+        if ( observation.getNrDMs() % (conf.getNrThreadsD0() * conf.getNrItemsD0()) != 0 )
+        {
+          continue;
+        }
       }
-      if ( reinitializeDeviceMemory ) {
-        delete clQueues;
-        clQueues = new std::vector< std::vector < cl::CommandQueue > >();
-        isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
+      for ( unsigned int intType = 0; intType < 2; intType++ )
+      {
+        conf.setIntType(intType);
+        // Generate kernel
+        double gflops = isa::utils::giga(observation.getNrSynthesizedBeams() * static_cast< uint64_t >(observation.getNrDMs(true) * observation.getNrDMs()) * observation.getNrSamplesPerBatch());
+        double gbs = isa::utils::giga((observation.getNrSynthesizedBeams() * static_cast< uint64_t >(observation.getNrDMs(true) * observation.getNrDMs()) * observation.getNrSamplesPerBatch()) + (observation.getNrSynthesizedBeams() * static_cast< uint64_t >(observation.getNrDMs(true) * observation.getNrDMs()) * (observation.getNrSamplesPerBatch() / integration)));
+        isa::utils::Timer timer;
+        cl::Kernel * kernel;
+
+        std::string * code;
+        if ( inPlace )
+        {
+          code = Integration::getIntegrationAfterDedispersionInPlaceOpenCL<dataType>(conf, observation, dataName, integration, padding);
+        }
+        else if ( DMsSamples )
+        {
+          code = Integration::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
+        }
+        else
+        {
+          code = Integration::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+        }
+        if ( reinitializeDeviceMemory ) {
+          delete clQueues;
+          clQueues = new std::vector< std::vector < cl::CommandQueue > >();
+          isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
+          try {
+            initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input.size(), &output_d, output.size());
+          } catch ( cl::Error & err ) {
+            std::cerr << "Error in memory allocation: ";
+            std::cerr << std::to_string(err.err()) << "." << std::endl;
+            return -1;
+          }
+          reinitializeDeviceMemory = false;
+        }
         try {
-          initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input.size(), &output_d, output.size());
-        } catch ( cl::Error & err ) {
-          std::cerr << "Error in memory allocation: ";
-          std::cerr << std::to_string(err.err()) << "." << std::endl;
-          return -1;
+          if ( inPlace )
+          {
+            kernel = isa::OpenCL::compile("integration" + std::to_string(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+          }
+          else if ( DMsSamples )
+          {
+            kernel = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+          }
+          else
+          {
+            kernel = isa::OpenCL::compile("integrationSamplesDMs" + std::to_string(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+          }
+        } catch ( isa::OpenCL::OpenCLError & err ) {
+          std::cerr << err.what() << std::endl;
+          delete code;
+          break;
         }
-        reinitializeDeviceMemory = false;
-      }
-      try {
-        if ( DMsSamples ) {
-          kernel = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
-        } else {
-          kernel = isa::OpenCL::compile("integrationSamplesDMs" + std::to_string(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
-        }
-      } catch ( isa::OpenCL::OpenCLError & err ) {
-        std::cerr << err.what() << std::endl;
         delete code;
-        break;
-      }
-      delete code;
 
-      cl::NDRange global;
-      cl::NDRange local;
-      if ( DMsSamples ) {
-        global = cl::NDRange(conf.getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / integration) / conf.getNrItemsD0()), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
-        local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
-      } else {
-        global = cl::NDRange((observation.getNrDMs(true) * observation.getNrDMs())/ conf.getNrItemsD0(), observation.getNrSamplesPerBatch() / integration, observation.getNrSynthesizedBeams());
-        local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
-      }
-      kernel->setArg(0, input_d);
-      kernel->setArg(1, output_d);
-      try {
-        // Warm-up run
-        clQueues->at(clDeviceID)[0].finish();
-        clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
-        event.wait();
-        // Tuning runs
-        for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
-          timer.start();
+        cl::NDRange global;
+        cl::NDRange local;
+        if ( inPlace )
+        {
+          global = cl::NDRange(conf.getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+          local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
+        }
+        else if ( DMsSamples )
+        {
+          global = cl::NDRange(conf.getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / integration) / conf.getNrItemsD0()), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+          local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
+        }
+        else
+        {
+          global = cl::NDRange((observation.getNrDMs(true) * observation.getNrDMs())/ conf.getNrItemsD0(), observation.getNrSamplesPerBatch() / integration, observation.getNrSynthesizedBeams());
+          local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
+        }
+        kernel->setArg(0, input_d);
+        if ( !inPlace )
+        {
+          kernel->setArg(1, output_d);
+        }
+        try {
+          // Warm-up run
+          clQueues->at(clDeviceID)[0].finish();
           clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
           event.wait();
-          timer.stop();
+          // Tuning runs
+          for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
+            timer.start();
+            clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
+            event.wait();
+            timer.stop();
+          }
+        } catch ( cl::Error & err ) {
+          std::cerr << "OpenCL error kernel execution (";
+          std::cerr << conf.print() << "): ";
+          std::cerr << std::to_string(err.err()) << "." << std::endl;
+          delete kernel;
+          if ( err.err() == -4 || err.err() == -61 ) {
+            return -1;
+          }
+          reinitializeDeviceMemory = true;
+          break;
         }
-      } catch ( cl::Error & err ) {
-        std::cerr << "OpenCL error kernel execution (";
-        std::cerr << conf.print() << "): ";
-        std::cerr << std::to_string(err.err()) << "." << std::endl;
         delete kernel;
-        if ( err.err() == -4 || err.err() == -61 ) {
-          return -1;
-        }
-        reinitializeDeviceMemory = true;
-        break;
-      }
-      delete kernel;
 
-      if ( (gflops / timer.getAverageTime()) > bestGFLOPs ) {
-        bestGFLOPs = gflops / timer.getAverageTime();
-        bestConf = conf;
-      }
-      if ( !bestMode ) {
-        std::cout << observation.getNrSynthesizedBeams() << " " << observation.getNrDMs(true) * observation.getNrDMs() << " " << observation.getNrSamplesPerBatch() << " " << integration << " ";
-        std::cout << conf.print() << " ";
-        std::cout << std::setprecision(3);
-        std::cout << gflops / timer.getAverageTime() << " ";
-        std::cout << gbs / timer.getAverageTime() << " ";
-        std::cout << std::setprecision(6);
-        std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " ";
-        std::cout << timer.getCoefficientOfVariation() <<  std::endl;
+        if ( (gflops / timer.getAverageTime()) > bestGFLOPs ) {
+          bestGFLOPs = gflops / timer.getAverageTime();
+          bestConf = conf;
+        }
+        if ( !bestMode ) {
+          std::cout << observation.getNrSynthesizedBeams() << " " << observation.getNrDMs(true) * observation.getNrDMs() << " " << observation.getNrSamplesPerBatch() << " " << integration << " ";
+          std::cout << conf.print() << " ";
+          std::cout << std::setprecision(3);
+          std::cout << gflops / timer.getAverageTime() << " ";
+          std::cout << gbs / timer.getAverageTime() << " ";
+          std::cout << std::setprecision(6);
+          std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " ";
+          std::cout << timer.getCoefficientOfVariation() <<  std::endl;
+        }
       }
     }
   }
@@ -235,7 +285,10 @@ int main(int argc, char * argv[]) {
 void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, cl::Buffer * input_d, const unsigned int input_size, cl::Buffer * output_d, const unsigned int output_size) {
   try {
     *input_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, input_size * sizeof(dataType), 0, 0);
-    *output_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, output_size * sizeof(dataType), 0, 0);
+    if ( output_size > 0 )
+    {
+      *output_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, output_size * sizeof(dataType), 0, 0);
+    }
     clQueue->finish();
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error: " << std::to_string(err.err()) << "." << std::endl;
