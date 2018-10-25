@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
     observation.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-beams"));
     if ( inPlace )
     {
-      conf.setIntType(args.getSwitchArgument<std::string>("-int_type"));
+      conf.setIntType(args.getSwitchArgument<unsigned int>("-int_type"));
     }
   } catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
