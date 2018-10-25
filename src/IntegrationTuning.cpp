@@ -139,7 +139,18 @@ int main(int argc, char * argv[]) {
     for ( unsigned int itemsPerThread = 1; itemsPerThread <= maxItems; itemsPerThread++ )
     {
       conf.setNrItemsD0(itemsPerThread);
-      if ( DMsSamples || inPlace )
+      if ( inPlace )
+      {
+        if ( conf.getNrItemsD0() + 2 >= maxItems )
+        {
+          break;
+        }
+        if ( (conf.getNrThreadsD0() * conf.getNrItemsD0() * integration) > observation.getNrSamplesPerBatch() )
+        {
+          break;
+        }
+      }
+      else if ( DMsSamples )
       {
         if ( (observation.getNrSamplesPerBatch() % (integration * conf.getNrItemsD0())) != 0 )
         {
