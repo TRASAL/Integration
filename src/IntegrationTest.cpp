@@ -73,12 +73,17 @@ int main(int argc, char *argv[]) {
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
     observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-beams"));
+    if ( inPlace )
+    {
+      conf.setIntType(args.getSwitchArgument<std::string>("-int_type"));
+    }
   } catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   } catch ( std::exception & err ) {
     std::cerr << "Usage: " << argv[0] << " [-dms_samples | -samples_dms] [-print_code] [-print_results] [-random] -opencl_platform ... -opencl_device ... -padding ... -integration ... -threadsD0 ... -itemsD0 ... [-in_place] [-subband] -beams ... -samples ... -dms ..." << std::endl;
     std::cerr << " -subband -subbanding_dms ..." << std::endl;
+    std::cerr << " -in_place -int_type ..." << std::endl;
     return 1;
   }
 
