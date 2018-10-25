@@ -145,9 +145,13 @@ int main(int argc, char * argv[]) {
         {
           break;
         }
-        if ( (conf.getNrThreadsD0() * conf.getNrItemsD0() * integration) > observation.getNrSamplesPerBatch() )
+        else if ( (conf.getNrThreadsD0() * conf.getNrItemsD0() * integration) > observation.getNrSamplesPerBatch() )
         {
           break;
+        }
+        else if ( (observation.getNrSamplesPerBatch() % (integration * conf.getNrItemsD0())) != 0 )
+        {
+          continue;
         }
       }
       else if ( DMsSamples )
