@@ -390,12 +390,11 @@ std::string *getIntegrationInPlaceOpenCL(const integrationConf &conf, const Astr
     std::string *code = new std::string();
     // Begin kernel's template
     *code = "__kernel void integration" + std::to_string(integration) + "(__global " + dataName + " * const restrict data) {\n"
-    + conf.getIntType() + " inGlobalMemory = 0;\n"
-    "<%DEFS%>"
     "__local " + dataName + " buffer[" + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0() * integration) + "];\n"
     "for ( " + conf.getIntType() + " chunk = 0; chunk < " + std::to_string(dimZeroSize / (conf.getNrThreadsD0() * conf.getNrItemsD0() * integration)) + "; chunk++ ) {\n"
     "// Load samples in local memory\n"
-    "inGlobalMemory = (get_group_id(2) * " + std::to_string(dimOneSize * isa::utils::pad(dimZeroSize, padding / sizeof(NumericType))) + ") + (get_group_id(1) * " + std::to_string(isa::utils::pad(dimZeroSize, padding / sizeof(NumericType))) + ") + (chunk * " + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0() * integration) + ");\n"
+    "<%DEFS%>"
+    + conf.getIntType() + " inGlobalMemory = (get_group_id(2) * " + std::to_string(dimOneSize * isa::utils::pad(dimZeroSize, padding / sizeof(NumericType))) + ") + (get_group_id(1) * " + std::to_string(isa::utils::pad(dimZeroSize, padding / sizeof(NumericType))) + ") + (chunk * " + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0() * integration) + ");\n"
     "for ( " + conf.getIntType() + " item = get_local_id(0); item < " + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0() * integration) + "; item += " + std::to_string(conf.getNrThreadsD0()) + " ) {\n"
     "buffer[item] = data[inGlobalMemory + item];\n"
     "}\n"
