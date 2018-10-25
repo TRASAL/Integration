@@ -155,34 +155,28 @@ std::string *getIntegrationDMsSamplesOpenCL(const integrationConf &conf, const A
     }
     // Begin kernel's template
     *code = "__kernel void integrationDMsSamples" + std::to_string(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
-                                                                                                                                                                    "unsigned int beam = get_group_id(2);\n"
-                                                                                                                                                                    "unsigned int dm = get_group_id(1);\n"
-                                                                                                                                                                    "__local " +
-            dataName + " buffer[" + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0()) + "];\n"
-                                                                                                  "unsigned int inGlobalMemory = (beam * " +
-            std::to_string(nrDMs * observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + ") + (dm * " + std::to_string(observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(integration * conf.getNrItemsD0()) + ");\n"
-                                                                                                                                                                                                                                                                                 "<%DEFS%>"
-                                                                                                                                                                                                                                                                                 "\n"
-                                                                                                                                                                                                                                                                                 "// First computing phase\n"
-                                                                                                                                                                                                                                                                                 "for ( unsigned int sample = get_local_id(0); sample < " +
-            std::to_string(integration) + "; sample += " + std::to_string(conf.getNrThreadsD0()) + " ) {\n"
-                                                                                                   "<%SUM%>"
-                                                                                                   "}\n"
-                                                                                                   "<%LOAD%>"
-                                                                                                   "barrier(CLK_LOCAL_MEM_FENCE);\n"
-                                                                                                   "// Reduce\n"
-                                                                                                   "unsigned int threshold = " +
-            std::to_string(conf.getNrThreadsD0() / 2) + ";\n"
-                                                        "for ( unsigned int sample = get_local_id(0); threshold > 0; threshold /= 2 ) {\n"
-                                                        "if ( sample < threshold ) {\n"
-                                                        "<%REDUCE%>"
-                                                        "}\n"
-                                                        "barrier(CLK_LOCAL_MEM_FENCE);\n"
-                                                        "}\n"
-                                                        "inGlobalMemory = (beam * " +
-            std::to_string(nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + ") + (dm * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(conf.getNrItemsD0()) + ");\n"
-                                                                                                                                                                                                                                                                                                                       "if ( get_local_id(0) < " +
-            std::to_string(conf.getNrItemsD0()) + " ) {\n";
+    + conf.getIntType() + " beam = get_group_id(2);\n"
+    + conf.getIntType() + " dm = get_group_id(1);\n"
+    "__local " + dataName + " buffer[" + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0()) + "];\n"
+    + conf.getIntType() + " inGlobalMemory = (beam * " + std::to_string(nrDMs * observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + ") + (dm * " + std::to_string(observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(integration * conf.getNrItemsD0()) + ");\n"
+    "<%DEFS%>"
+    "\n"
+    "// First computing phase\n"
+    "for ( " + conf.getIntType() + " sample = get_local_id(0); sample < " + std::to_string(integration) + "; sample += " + std::to_string(conf.getNrThreadsD0()) + " ) {\n"
+    "<%SUM%>"
+    "}\n"
+    "<%LOAD%>"
+    "barrier(CLK_LOCAL_MEM_FENCE);\n"
+    "// Reduce\n"
+    + conf.getIntType() + " threshold = " + std::to_string(conf.getNrThreadsD0() / 2) + ";\n"
+    "for ( " + conf.getIntType() + " sample = get_local_id(0); threshold > 0; threshold /= 2 ) {\n"
+    "if ( sample < threshold ) {\n"
+    "<%REDUCE%>"
+    "}\n"
+    "barrier(CLK_LOCAL_MEM_FENCE);\n"
+    "}\n"
+    "inGlobalMemory = (beam * " + std::to_string(nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + ") + (dm * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(conf.getNrItemsD0()) + ");\n"
+    "if ( get_local_id(0) < " + std::to_string(conf.getNrItemsD0()) + " ) {\n";
     if (dataName == "float")
     {
         *code += "output[inGlobalMemory + get_local_id(0)] = buffer[get_local_id(0) * " + std::to_string(conf.getNrThreadsD0()) + "] * " + std::to_string(1.0f / integration) + "f;\n";
@@ -201,7 +195,7 @@ std::string *getIntegrationDMsSamplesOpenCL(const integrationConf &conf, const A
     std::string sum_sTemplate = "integratedSample<%NUM%> += input[inGlobalMemory + sample + <%OFFSET%>];\n";
     std::string load_sTemplate = "buffer[get_local_id(0) + <%OFFSET%>] = integratedSample<%NUM%>;\n";
     std::string reduce_sTemplate = "integratedSample<%NUM%> += buffer[(sample + <%OFFSET%>) + threshold];\n"
-                                   "buffer[sample + <%OFFSET%>] = integratedSample<%NUM%>;\n";
+    "buffer[sample + <%OFFSET%>] = integratedSample<%NUM%>;\n";
     // End kernel's template
 
     std::string *defs_s = new std::string();
@@ -284,19 +278,16 @@ std::string *getIntegrationSamplesDMsOpenCL(const integrationConf &conf, const A
     }
     // Begin kernel's template
     *code = "__kernel void integrationSamplesDMs" + std::to_string(integration) + "(__global const " + dataName + " * const restrict input, __global " + dataName + " * const restrict output) {\n"
-                                                                                                                                                                    "unsigned int beam = get_group_id(2);\n"
-                                                                                                                                                                    "unsigned int firstSample = get_group_id(1) * " +
-            std::to_string(integration) + ";\n"
-                                          "unsigned int dm = (get_group_id(0) * " +
-            std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0()) + ") + get_local_id(0);\n"
-                                                                          "<%DEFS%>"
-                                                                          "\n"
-                                                                          "for ( unsigned int sample = firstSample; sample < firstSample + " +
-            std::to_string(integration) + "; sample++ ) {\n"
-                                          "<%SUM%>"
-                                          "}\n"
-                                          "<%STORE%>"
-                                          "}\n";
+    + conf.getIntType() + " beam = get_group_id(2);\n"
+    + conf.getIntType() + " firstSample = get_group_id(1) * " + std::to_string(integration) + ";\n"
+    + conf.getIntType() + " dm = (get_group_id(0) * " + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0()) + ") + get_local_id(0);\n"
+    "<%DEFS%>"
+    "\n"
+    "for ( " + conf.getIntType() + " sample = firstSample; sample < firstSample + " + std::to_string(integration) + "; sample++ ) {\n"
+    "<%SUM%>"
+    "}\n"
+    "<%STORE%>"
+    "}\n";
     std::string defs_sTemplate = dataName + " integratedSample<%NUM%> = 0;\n";
     std::string sum_sTemplate = "integratedSample<%NUM%> += input[(beam * " + std::to_string(observation.getNrSamplesPerBatch() * isa::utils::pad(nrDMs, padding / sizeof(T))) + " ) + (sample * " + std::to_string(isa::utils::pad(nrDMs, padding / sizeof(T))) + ") + (dm + <%OFFSET%>)];\n";
     std::string store_sTemplate;
