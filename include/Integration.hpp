@@ -405,7 +405,7 @@ std::string *getIntegrationInPlaceOpenCL(const integrationConf &conf, const Astr
     "<%SUMS%>"
     "}\n"
     "// Store integrated data\n"
-    "inGlobalMemory = (get_group_id(2) * " + std::to_string(dimOneSize * isa::utils::pad(dimZeroSize / integration, padding / sizeof(NumericType))) + ") + (get_group_id(1) * " + std::to_string(isa::utils::pad(dimZeroSize / integration, padding / sizeof(NumericType))) + " + (chunk * " + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0()) + "));\n"
+    "inGlobalMemory = (get_group_id(2) * " + std::to_string(dimOneSize * isa::utils::pad(dimZeroSize / integration, padding / sizeof(NumericType))) + ") + (get_group_id(1) * " + std::to_string(isa::utils::pad(dimZeroSize / integration, padding / sizeof(NumericType))) + ") + (chunk * " + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0()) + "));\n"
     "<%STORES%>"
     "}\n"
     "}\n";
