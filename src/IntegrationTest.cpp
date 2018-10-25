@@ -302,6 +302,7 @@ int main(int argc, char *argv[]) {
             }
           }
         }
+        std::cout << std::endl;
       }
     }
     else if ( inPlace )
@@ -320,6 +321,7 @@ int main(int argc, char *argv[]) {
             }
           }
         }
+        std::cout << std::endl;
       }
     }
     else
@@ -339,6 +341,7 @@ int main(int argc, char *argv[]) {
           }
         }
       }
+      std::cout << std::endl;
     }
   }
 
