@@ -136,7 +136,8 @@ int main(int argc, char *argv[]) {
     if ( printResults ) {
       std::cout << "Beam: " << beam << std::endl;
     }
-    if ( DMsSamples ) {
+    if ( DMsSamples || inPlace )
+    {
       for ( unsigned int subbandDM = 0; subbandDM < observation.getNrDMs(true); subbandDM++ ) {
         for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
           if ( printResults ) {
@@ -157,7 +158,9 @@ int main(int argc, char *argv[]) {
           }
         }
       }
-    } else {
+    }
+    else
+    {
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
         if ( printResults ) {
           std::cout << "Sample: " << sample << " -- ";
