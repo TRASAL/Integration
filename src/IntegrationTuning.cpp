@@ -164,7 +164,14 @@ int main(int argc, char * argv[]) {
   if ( !bestMode )
   {
     std::cout << std::fixed << std::endl;
-    std::cout << "# nrBeams nrDMs nrSamples integration *configuration* GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
+    if ( inPlace && beforeDedispersion )
+    {
+      std::cout << "# nrBeams nrChannels nrSamples integration *configuration* GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
+    }
+    else
+    {
+      std::cout << "# nrBeams nrDMs nrSamples integration *configuration* GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
+    }
   }
 
   for ( unsigned int threads = minThreads; threads <= maxThreads; )
