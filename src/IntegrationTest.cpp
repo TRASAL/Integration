@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
         observation.setDMRange(1, 0.0f, 0.0f, true);
       }
       observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0f, 0.0f);
-    }  
+    }
   }
   catch  ( isa::utils::SwitchNotFound & err )
   {
