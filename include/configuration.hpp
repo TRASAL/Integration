@@ -15,6 +15,8 @@
 #pragma once
 
 // Define the data types
-typedef float dataType;
+typedef float AfterDedispersionNumericType;
 std::string dataName("float");
+typedef uint8_t BeforeDedispersionNumericType;
+std::string dataName("unsigned char");
 
