@@ -129,9 +129,11 @@ int main(int argc, char *argv[]) {
   // Allocate memory
   cl::Buffer input_d;
   cl::Buffer output_d;
-  std::vector<AfterDedispersionNumericType> input_before, input_after;
+  std::vector<BeforeDedispersionNumericType> input_before;
+  std::vector<AfterDedispersionNumericType> input_after;
   std::vector<AfterDedispersionNumericType> output;
-  std::vector<AfterDedispersionNumericType> output_control_before, output_control_after;
+  std::vector<BeforeDedispersionNumericType> output_control_before;
+  std::vector<AfterDedispersionNumericType> output_control_after;
 
   if ( inPlace )
   {
