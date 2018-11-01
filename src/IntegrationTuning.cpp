@@ -128,29 +128,30 @@ int main(int argc, char * argv[]) {
   }
 
   // Allocate host memory
-  std::vector<dataType> input, output;
+  std::vector<BeforeDedispersionNumericType> input_before;
+  std::vector<AfterDedispersionNumericType> input_after, output;
   if ( inPlace )
   {
     if ( beforeDedispersion )
     {
-      input.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(dataType)));
+      input_before.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(BeforeDedispersionNumericType)));
     }
     else
     {
-      input.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(dataType)));
+      input_after.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(AfterDedispersionNumericType)));
     }
   }
   else
   {
     if ( DMsSamples )
     {
-      input.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(dataType)));
-      output.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(dataType)));
+      input_after.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(AfterDedispersionNumericType)));
+      output.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType)));
     }
     else
     {
-      input.resize(observation.getNrSynthesizedBeams() * observation.getNrSamplesPerBatch() * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(dataType)));
-      output.resize(observation.getNrSynthesizedBeams() * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(dataType)));
+      input_after.resize(observation.getNrSynthesizedBeams() * observation.getNrSamplesPerBatch() * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType)));
+      output.resize(observation.getNrSynthesizedBeams() * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType)));
     }
   }
 
@@ -257,19 +258,19 @@ int main(int argc, char * argv[]) {
         std::string * code;
         if ( inPlace && beforeDedispersion )
         {
-          code = Integration::getIntegrationBeforeDedispersionInPlaceOpenCL<dataType>(conf, observation, dataName, integration, padding);
+          code = Integration::getIntegrationBeforeDedispersionInPlaceOpenCL<BeforeDedispersionNumericType>(conf, observation, dataName, integration, padding);
         }
         else if ( inPlace && !beforeDedispersion )
         {
-          code = Integration::getIntegrationAfterDedispersionInPlaceOpenCL<dataType>(conf, observation, dataName, integration, padding);
+          code = Integration::getIntegrationAfterDedispersionInPlaceOpenCL<AfterDedispersionNumericType>(conf, observation, dataName, integration, padding);
         }
         else if ( DMsSamples )
         {
-          code = Integration::getIntegrationDMsSamplesOpenCL< dataType >(conf, observation, dataName, integration, padding);
+          code = Integration::getIntegrationDMsSamplesOpenCL<AfterDedispersionNumericType>(conf, observation, dataName, integration, padding);
         }
         else
         {
-          code = Integration::getIntegrationSamplesDMsOpenCL< dataType >(conf, observation, dataName, integration, padding);
+          code = Integration::getIntegrationSamplesDMsOpenCL<AfterDedispersionNumericType>(conf, observation, dataName, integration, padding);
         }
         if ( reinitializeDeviceMemory )
         {
@@ -278,7 +279,14 @@ int main(int argc, char * argv[]) {
           isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
           try
           {
-            initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input.size(), &output_d, output.size());
+            if ( beforeDedispersion )
+            {
+              initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input_before.size(), &output_d, output.size());
+            }
+            else
+            {
+              initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input_after.size(), &output_d, output.size());
+            }
           }
           catch ( cl::Error & err )
           {
@@ -410,10 +418,14 @@ int main(int argc, char * argv[]) {
 void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, cl::Buffer * input_d, const unsigned int input_size, cl::Buffer * output_d, const unsigned int output_size) {
   try
   {
-    *input_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, input_size * sizeof(dataType), 0, 0);
     if ( output_size > 0 )
     {
-      *output_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, output_size * sizeof(dataType), 0, 0);
+      *input_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, input_size * sizeof(AfterDedispersionNumericType), 0, 0);
+      *output_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, output_size * sizeof(AfterDedispersionNumericType), 0, 0);
+    }
+    else
+    {
+      *input_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, input_size * sizeof(BeforeDedispersionNumericType), 0, 0);
     }
     clQueue->finish();
   }
