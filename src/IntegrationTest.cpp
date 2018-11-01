@@ -351,7 +351,12 @@ int main(int argc, char *argv[]) {
     {
       Integration::integrationSamplesDMs(conf.getSubbandDedispersion(), observation, integration, padding, input, output_control);
     }
-    if ( inPlace )
+    if ( inPlace && beforeDedispersion )
+    {
+      global = cl::NDRange(conf.getNrThreadsD0(), observation.getNrChannels(), observation.getNrBeams());
+      local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
+    }
+    else if ( inPlace && !beforeDedispersion )
     {
       global = cl::NDRange(conf.getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
       local = cl::NDRange(conf.getNrThreadsD0(), 1, 1);
