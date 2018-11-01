@@ -368,7 +368,14 @@ int main(int argc, char * argv[]) {
         }
         if ( !bestMode )
         {
-          std::cout << observation.getNrSynthesizedBeams() << " " << observation.getNrDMs(true) * observation.getNrDMs() << " " << observation.getNrSamplesPerBatch() << " " << integration << " ";
+          if ( inPlace && beforeDedispersion )
+          {
+            std::cout << observation.getNrBeams() << " " << observation.getNrChannels() << " " << observation.getNrSamplesPerDispersedBatch() << " " << integration << " ";
+          }
+          else
+          {
+            std::cout << observation.getNrSynthesizedBeams() << " " << observation.getNrDMs(true) * observation.getNrDMs() << " " << observation.getNrSamplesPerBatch() << " " << integration << " ";
+          }
           std::cout << conf.print() << " ";
           std::cout << std::setprecision(3);
           std::cout << gflops / timer.getAverageTime() << " ";
