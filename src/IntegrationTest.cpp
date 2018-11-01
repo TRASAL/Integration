@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
   }
   catch ( std::exception & err )
   {
-    std::cerr << "Usage: " << argv[0] << " [-dms_samples | -samples_dms] [-print_code] [-print_results] [-random] -opencl_platform ... -opencl_device ... -padding ... -int_type ... -integration ... -threadsD0 ... -itemsD0 ... [-in_place] [-subband] -beams ... -samples ... -dms ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-in_place] [-dms_samples | -samples_dms] [-print_code] [-print_results] [-random] -opencl_platform ... -opencl_device ... -padding ... -int_type ... -integration ... -threadsD0 ... -itemsD0 ... [-subband] -beams ... -samples ... -dms ..." << std::endl;
     std::cerr << " -subband -subbanding_dms ..." << std::endl;
     std::cerr << " -in_place [-before_dedispersion | -after_dedispersion]" << std::endl;
     std::cerr << " -before_dedispersion -channels ..." << std::endl;
