@@ -47,6 +47,8 @@ class integrationConf : public isa::OpenCL::KernelConf
 typedef std::map<std::string, std::map<unsigned int, std::map<unsigned int, Integration::integrationConf *> *> *> tunedIntegrationConf;
 
 // Sequential
+template<typename NumericType>
+void integrationBeforeDedispersion(const AstroData::Observation &observation, const unsigned int integration, const unsigned int padding, const std::vector<NumericType> &input, std::vector<NumericType> &output);
 template <typename T>
 void integrationDMsSamples(const bool subbandDedispersion, const AstroData::Observation &observation, const unsigned int integration, const unsigned int padding, const std::vector<T> &input, std::vector<T> &output);
 template <typename T>
@@ -74,6 +76,27 @@ inline bool integrationConf::getSubbandDedispersion() const
 inline void integrationConf::setSubbandDedispersion(bool subband)
 {
     subbandDedispersion = subband;
+}
+
+template<typename NumericType>
+void integrationBeforeDedispersion(const AstroData::Observation &observation, const unsigned int integration, const unsigned int padding, const std::vector<NumericType> &input, std::vector<NumericType> &output)
+{
+    for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ )
+    {
+        for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ )
+        {
+            for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(); sample += integration )
+            {
+                NumericType integratedSample = 0;
+
+                for ( unsigned int i = 0; i < integration; i++ )
+                {
+                    integratedSample += input[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(NumericType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(NumericType))) + (sample + i)];
+                }
+                output[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / integration, padding / sizeof(NumericType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / integration, padding / sizeof(NumericType))) + (sample / integration)] = integratedSample / integration;
+            }
+        }
+    }
 }
 
 template <typename T>
