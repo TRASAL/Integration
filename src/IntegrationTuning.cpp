@@ -30,7 +30,7 @@
 #include <Timer.hpp>
 
 
-void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, cl::Buffer * input_d, const unsigned int input_size, cl::Buffer * output_d, const unsigned int output_size);
+void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, cl::Buffer * input_d, const unsigned int input_size, cl::Buffer * output_d, const unsigned int output_size, bool before = false);
 
 int main(int argc, char * argv[]) {
   bool reinitializeDeviceMemory = true;
@@ -281,7 +281,7 @@ int main(int argc, char * argv[]) {
           {
             if ( beforeDedispersion )
             {
-              initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input_before.size(), &output_d, output.size());
+              initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input_before.size(), &output_d, output.size(), true);
             }
             else
             {
@@ -415,7 +415,7 @@ int main(int argc, char * argv[]) {
   return 0;
 }
 
-void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, cl::Buffer * input_d, const unsigned int input_size, cl::Buffer * output_d, const unsigned int output_size) {
+void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, cl::Buffer * input_d, const unsigned int input_size, cl::Buffer * output_d, const unsigned int output_size, bool before) {
   try
   {
     if ( output_size > 0 )
@@ -425,7 +425,14 @@ void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue,
     }
     else
     {
-      *input_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, input_size * sizeof(BeforeDedispersionNumericType), 0, 0);
+      if ( before )
+      {
+        *input_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, input_size * sizeof(BeforeDedispersionNumericType), 0, 0);
+      }
+      else
+      {
+        *input_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, input_size * sizeof(AfterDedispersionNumericType), 0, 0);
+      }
     }
     clQueue->finish();
   }
