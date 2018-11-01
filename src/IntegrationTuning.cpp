@@ -258,19 +258,19 @@ int main(int argc, char * argv[]) {
         std::string * code;
         if ( inPlace && beforeDedispersion )
         {
-          code = Integration::getIntegrationBeforeDedispersionInPlaceOpenCL<BeforeDedispersionNumericType>(conf, observation, dataName, integration, padding);
+          code = Integration::getIntegrationBeforeDedispersionInPlaceOpenCL<BeforeDedispersionNumericType>(conf, observation, BeforeDedispersionDataName, integration, padding);
         }
         else if ( inPlace && !beforeDedispersion )
         {
-          code = Integration::getIntegrationAfterDedispersionInPlaceOpenCL<AfterDedispersionNumericType>(conf, observation, dataName, integration, padding);
+          code = Integration::getIntegrationAfterDedispersionInPlaceOpenCL<AfterDedispersionNumericType>(conf, observation, AfterDedispersionDataName, integration, padding);
         }
         else if ( DMsSamples )
         {
-          code = Integration::getIntegrationDMsSamplesOpenCL<AfterDedispersionNumericType>(conf, observation, dataName, integration, padding);
+          code = Integration::getIntegrationDMsSamplesOpenCL<AfterDedispersionNumericType>(conf, observation, AfterDedispersionDataName, integration, padding);
         }
         else
         {
-          code = Integration::getIntegrationSamplesDMsOpenCL<AfterDedispersionNumericType>(conf, observation, dataName, integration, padding);
+          code = Integration::getIntegrationSamplesDMsOpenCL<AfterDedispersionNumericType>(conf, observation, AfterDedispersionDataName, integration, padding);
         }
         if ( reinitializeDeviceMemory )
         {
