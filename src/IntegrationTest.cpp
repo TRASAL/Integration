@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
     {
       DMsSamples = args.getSwitch("-dms_samples");
       bool samplesDMs = args.getSwitch("-samples_dms");
-      if ( (DMsSamples && samplesDMs) || (!DMsSamples && !samplesDMs) ) {
+      if ( (DMsSamples && samplesDMs) || (!DMsSamples && !samplesDMs) )
+      {
         std::cerr << "-dms_samples and -samples_dms are mutually exclusive." << std::endl;
         return 1;
       }
