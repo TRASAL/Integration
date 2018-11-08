@@ -45,7 +45,6 @@ class integrationConf : public isa::OpenCL::KernelConf
 };
 
 typedef std::map<std::string, std::map<unsigned int, std::map<unsigned int, Integration::integrationConf *> *> *> tunedIntegrationConf;
-typedef std::map<std::string, std::map<unsigned int, Integration::integrationConf *> *> tunedIntegrationBeforeDedispersionConf;
 
 // Sequential
 template<typename NumericType>
@@ -67,7 +66,6 @@ template<typename NumericType>
 std::string *getIntegrationInPlaceOpenCL(const integrationConf &conf, const AstroData::Observation &observation, const std::string &dataName, const unsigned int dimOneSize, const unsigned int dimZeroSize, const unsigned int integration, const unsigned int padding);
 // Read configuration files
 void readTunedIntegrationConf(tunedIntegrationConf &tunedConf, const std::string &confFilename);
-void readTunedIntegrationBeforeDedispersionConf(tunedIntegrationBeforeDedispersionConf &tunedConf, const std::string &confFilename);
 
 // Implementations
 inline bool integrationConf::getSubbandDedispersion() const
