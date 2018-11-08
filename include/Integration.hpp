@@ -117,15 +117,15 @@ void integrationDMsSamples(const bool subbandDedispersion, const AstroData::Obse
     {
         for (unsigned int dm = 0; dm < nrDMs; dm++)
         {
-            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample += integration)
+            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / observation.getDownsampling(); sample += integration)
             {
                 T integratedSample = 0;
 
                 for (unsigned int i = 0; i < integration; i++)
                 {
-                    integratedSample += input[(beam * nrDMs * observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + (sample + i)];
+                    integratedSample += input[(beam * nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), padding / sizeof(T))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), padding / sizeof(T))) + (sample + i)];
                 }
-                output[(beam * nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + (sample / integration)] = integratedSample / integration;
+                output[(beam * nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / integration, padding / sizeof(T))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / integration, padding / sizeof(T))) + (sample / integration)] = integratedSample / integration;
             }
         }
     }
@@ -181,7 +181,7 @@ std::string *getIntegrationDMsSamplesOpenCL(const integrationConf &conf, const A
     + conf.getIntType() + " beam = get_group_id(2);\n"
     + conf.getIntType() + " dm = get_group_id(1);\n"
     "__local " + dataName + " buffer[" + std::to_string(conf.getNrThreadsD0() * conf.getNrItemsD0()) + "];\n"
-    + conf.getIntType() + " inGlobalMemory = (beam * " + std::to_string(nrDMs * observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + ") + (dm * " + std::to_string(observation.getNrSamplesPerBatch(false, padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(integration * conf.getNrItemsD0()) + ");\n"
+    + conf.getIntType() + " inGlobalMemory = (beam * " + std::to_string(nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), padding / sizeof(T))) + ") + (dm * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(integration * conf.getNrItemsD0()) + ");\n"
     "<%DEFS%>"
     "\n"
     "// First computing phase\n"
@@ -198,7 +198,7 @@ std::string *getIntegrationDMsSamplesOpenCL(const integrationConf &conf, const A
     "}\n"
     "barrier(CLK_LOCAL_MEM_FENCE);\n"
     "}\n"
-    "inGlobalMemory = (beam * " + std::to_string(nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + ") + (dm * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(conf.getNrItemsD0()) + ");\n"
+    "inGlobalMemory = (beam * " + std::to_string(nrDMs * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / integration, padding / sizeof(T))) + ") + (dm * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / integration, padding / sizeof(T))) + ") + (get_group_id(0) * " + std::to_string(conf.getNrItemsD0()) + ");\n"
     "if ( get_local_id(0) < " + std::to_string(conf.getNrItemsD0()) + " ) {\n";
     if (dataName == "float")
     {
@@ -395,7 +395,7 @@ std::string *getIntegrationAfterDedispersionInPlaceOpenCL(const integrationConf 
     {
         nrDMs = observation.getNrDMs();
     }
-    return getIntegrationInPlaceOpenCL<NumericType>(conf, observation, dataName, nrDMs, observation.getNrSamplesPerBatch(), integration, padding);
+    return getIntegrationInPlaceOpenCL<NumericType>(conf, observation, dataName, nrDMs, observation.getNrSamplesPerBatch() / observation.getDownsampling(), integration, padding);
 }
 
 template<typename NumericType>
