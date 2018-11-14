@@ -405,7 +405,14 @@ int main(int argc, char * argv[]) {
 
   if ( bestMode )
   {
-    std::cout << observation.getNrDMs(true) * observation.getNrDMs() << " " << integration << " " << bestConf.print() << std::endl;
+    if ( inPlace && beforeDedispersion )
+    {
+      std::cout << observation.getNrSamplesPerBatch() << " " << integration << " " << bestConf.print() << std::endl;
+    }
+    else
+    {
+      std::cout << observation.getNrDMs(true) * observation.getNrDMs() << " " << integration << " " << bestConf.print() << std::endl;
+    }
   }
   else
   {
