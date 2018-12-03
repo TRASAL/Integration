@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
           }
           if ( printResults )
           {
-            std::cout << input_before[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(BeforeDedispersionNumericType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(BeforeDedispersionNumericType))) + sample] << " ";
+            std::cout << static_cast<double>(input_before[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(BeforeDedispersionNumericType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(BeforeDedispersionNumericType))) + sample]) << " ";
           }
         }
         if ( printResults )
@@ -241,7 +241,7 @@ int main(int argc, char *argv[]) {
             }
             if ( printResults )
             {
-              std::cout << input_after[(beam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(AfterDedispersionNumericType))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(AfterDedispersionNumericType))) + sample] << " ";
+              std::cout << static_cast<double>(input_after[(beam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(AfterDedispersionNumericType))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(AfterDedispersionNumericType))) + sample]) << " ";
             }
           }
           if ( printResults )
@@ -273,7 +273,7 @@ int main(int argc, char *argv[]) {
             }
             if ( printResults )
             {
-              std::cout << input_after[(beam * observation.getNrSamplesPerBatch() * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (sample * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + dm] << " ";
+              std::cout << static_cast<double>(input_after[(beam * observation.getNrSamplesPerBatch() * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (sample * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + dm]) << " ";
             }
           }
           if ( printResults )
@@ -440,7 +440,7 @@ int main(int argc, char *argv[]) {
           }
           if ( printResults )
           {
-            std::cout << output_control_before[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / integration, padding / sizeof(BeforeDedispersionNumericType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / integration, padding / sizeof(BeforeDedispersionNumericType))) + sample] << "," << input_before[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(BeforeDedispersionNumericType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(BeforeDedispersionNumericType))) + sample] << " ";
+            std::cout << static_cast<double>(output_control_before[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / integration, padding / sizeof(BeforeDedispersionNumericType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / integration, padding / sizeof(BeforeDedispersionNumericType))) + sample]) << "," << static_cast<double>(input_before[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(BeforeDedispersionNumericType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(BeforeDedispersionNumericType))) + sample]) << " ";
           }
         }
         if ( printResults )
@@ -467,7 +467,7 @@ int main(int argc, char *argv[]) {
             }
             if ( printResults )
             {
-              std::cout << output_control_after[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + sample] << "," << input_after[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch(), padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch(), padding / sizeof(AfterDedispersionNumericType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch(), padding / sizeof(AfterDedispersionNumericType))) + sample] << " ";
+              std::cout << static_cast<double>(output_control_after[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + sample]) << "," << static_cast<double>(input_after[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch(), padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch(), padding / sizeof(AfterDedispersionNumericType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch(), padding / sizeof(AfterDedispersionNumericType))) + sample]) << " ";
             }
           }
           if ( printResults )
@@ -495,7 +495,7 @@ int main(int argc, char *argv[]) {
             }
             if ( printResults )
             {
-              std::cout << output_control_after[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + sample] << "," << output[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + sample] << " ";
+              std::cout << static_cast<double>(output_control_after[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + sample]) << "," << static_cast<double>(output[(beam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / integration, padding / sizeof(AfterDedispersionNumericType))) + sample]) << " ";
             }
           }
           if ( printResults )
@@ -523,7 +523,7 @@ int main(int argc, char *argv[]) {
             }
             if ( printResults )
             {
-              std::cout << output_control_after[(beam * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (sample * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + dm] << "," << output[(beam * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (sample * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + dm] << " ";
+              std::cout << static_cast<double>(output_control_after[(beam * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (sample * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + dm]) << "," << static_cast<double>(output[(beam * (observation.getNrSamplesPerBatch() / integration) * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (sample * observation.getNrDMs(true) * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + (subbandDM * observation.getNrDMs(false, padding / sizeof(AfterDedispersionNumericType))) + dm]) << " ";
             }
           }
         }
