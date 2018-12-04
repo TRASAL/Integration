@@ -147,8 +147,16 @@ int main(int argc, char *argv[]) {
   {
     if ( beforeDedispersion )
     {
-      input_before.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(BeforeDedispersionNumericType)));
-      output_control_before.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(BeforeDedispersionNumericType)));
+      if ( conf.getSubbandDedispersion() )
+      {
+        input_before.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(BeforeDedispersionNumericType)));
+        output_control_before.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true), padding / sizeof(BeforeDedispersionNumericType)));
+      }
+      else
+      {
+        input_before.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(BeforeDedispersionNumericType)));
+        output_control_before.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(BeforeDedispersionNumericType)));
+      }
     }
     else
     {
