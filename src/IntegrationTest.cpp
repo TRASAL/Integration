@@ -87,9 +87,16 @@ int main(int argc, char *argv[]) {
     if ( inPlace && beforeDedispersion )
     {
       observation.setFrequencyRange(1, args.getSwitchArgument<unsigned int>("-channels"), 0.0f, 0.0f);
-      observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch());
       observation.setNrBeams(observation.getNrSynthesizedBeams());
       conf.setSubbandDedispersion(args.getSwitch("-subband"));
+      if ( conf.getSubbandDedispersion() )
+      {
+        observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(), true);
+      }
+      else
+      {
+        observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch());
+      }
     }
     else
     {
