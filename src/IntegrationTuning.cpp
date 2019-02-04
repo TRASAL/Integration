@@ -156,10 +156,7 @@ int main(int argc, char * argv[]) {
     }
   }
 
-  cl::Context clContext;
-  std::vector<cl::Platform> * clPlatforms = new std::vector<cl::Platform>();
-  std::vector<cl::Device> * clDevices = new std::vector<cl::Device>();
-  std::vector<std::vector<cl::CommandQueue>> * clQueues = new std::vector<std::vector<cl::CommandQueue>>();
+  isa::OpenCL::OpenCLRunTime openCLRunTime;
   cl::Buffer input_d;
   cl::Buffer output_d;
 
@@ -275,18 +272,16 @@ int main(int argc, char * argv[]) {
         }
         if ( reinitializeDeviceMemory )
         {
-          delete clQueues;
-          clQueues = new std::vector< std::vector < cl::CommandQueue > >();
-          isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
+          isa::OpenCL::initializeOpenCL(clPlatformID, 1, openCLRunTime);
           try
           {
             if ( beforeDedispersion )
             {
-              initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input_before.size(), &output_d, output.size(), true);
+              initializeDeviceMemory(*(openCLRunTime.context), &(openCLRunTime.queues->at(clDeviceID)[0]), &input_d, input_before.size(), &output_d, output.size(), true);
             }
             else
             {
-              initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input_d, input_after.size(), &output_d, output.size());
+              initializeDeviceMemory(*(openCLRunTime.context), &(openCLRunTime.queues->at(clDeviceID)[0]), &input_d, input_after.size(), &output_d, output.size());
             }
           }
           catch ( cl::Error & err )
@@ -301,15 +296,15 @@ int main(int argc, char * argv[]) {
         {
           if ( inPlace )
           {
-            kernel = isa::OpenCL::compile("integration" + std::to_string(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+            kernel = isa::OpenCL::compile("integration" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *(openCLRunTime.context), openCLRunTime.devices->at(clDeviceID));
           }
           else if ( DMsSamples )
           {
-            kernel = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+            kernel = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *(openCLRunTime.context), openCLRunTime.devices->at(clDeviceID));
           }
           else
           {
-            kernel = isa::OpenCL::compile("integrationSamplesDMs" + std::to_string(integration), *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+            kernel = isa::OpenCL::compile("integrationSamplesDMs" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *(openCLRunTime.context), openCLRunTime.devices->at(clDeviceID));
           }
         }
         catch ( isa::OpenCL::OpenCLError & err )
@@ -350,14 +345,14 @@ int main(int argc, char * argv[]) {
         try
         {
           // Warm-up run
-          clQueues->at(clDeviceID)[0].finish();
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
+          openCLRunTime.queues->at(clDeviceID)[0].finish();
+          openCLRunTime.queues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
           event.wait();
           // Tuning runs
           for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ )
           {
             timer.start();
-            clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
+            openCLRunTime.queues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
             event.wait();
             timer.stop();
           }

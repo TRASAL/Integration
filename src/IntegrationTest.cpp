@@ -127,12 +127,9 @@ int main(int argc, char *argv[]) {
   }
 
   // Initialize OpenCL
-  cl::Context * clContext = new cl::Context();
-  std::vector< cl::Platform > * clPlatforms = new std::vector< cl::Platform >();
-  std::vector< cl::Device > * clDevices = new std::vector< cl::Device >();
-  std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
+  isa::OpenCL::OpenCLRunTime openCLRunTime;
 
-  isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
+  isa::OpenCL::initializeOpenCL(clPlatformID, 1, openCLRunTime);
 
   // Allocate memory
   cl::Buffer input_d;
@@ -183,15 +180,15 @@ int main(int argc, char *argv[]) {
   try {
     if ( inPlace && beforeDedispersion )
     {
-      input_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, input_before.size() * sizeof(BeforeDedispersionNumericType), 0, 0);
+      input_d = cl::Buffer(*(openCLRunTime.context), CL_MEM_READ_WRITE, input_before.size() * sizeof(BeforeDedispersionNumericType), 0, 0);
     }
     else
     {
-      input_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, input_after.size() * sizeof(AfterDedispersionNumericType), 0, 0);
+      input_d = cl::Buffer(*(openCLRunTime.context), CL_MEM_READ_WRITE, input_after.size() * sizeof(AfterDedispersionNumericType), 0, 0);
     }
     if ( !inPlace )
     {
-      output_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, output.size() * sizeof(AfterDedispersionNumericType), 0, 0);
+      output_d = cl::Buffer(*(openCLRunTime.context), CL_MEM_READ_WRITE, output.size() * sizeof(AfterDedispersionNumericType), 0, 0);
     }
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error allocating memory: " << std::to_string(err.err()) << "." << std::endl;
@@ -314,11 +311,11 @@ int main(int argc, char *argv[]) {
   {
     if ( beforeDedispersion )
     {
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(input_d, CL_FALSE, 0, input_before.size() * sizeof(beforeDedispersion), reinterpret_cast< void * >(input_before.data()), 0, 0);
+      openCLRunTime.queues->at(clDeviceID)[0].enqueueWriteBuffer(input_d, CL_FALSE, 0, input_before.size() * sizeof(beforeDedispersion), reinterpret_cast< void * >(input_before.data()), 0, 0);
     }
     else
     {
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(input_d, CL_FALSE, 0, input_after.size() * sizeof(AfterDedispersionNumericType), reinterpret_cast< void * >(input_after.data()), 0, 0);
+      openCLRunTime.queues->at(clDeviceID)[0].enqueueWriteBuffer(input_d, CL_FALSE, 0, input_after.size() * sizeof(AfterDedispersionNumericType), reinterpret_cast< void * >(input_after.data()), 0, 0);
     }
   }
   catch ( cl::Error & err )
@@ -353,15 +350,15 @@ int main(int argc, char *argv[]) {
   {
     if ( inPlace )
     {
-      kernel = isa::OpenCL::compile("integration" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+      kernel = isa::OpenCL::compile("integration" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *(openCLRunTime.context), openCLRunTime.devices->at(clDeviceID));
     }
     else if ( DMsSamples )
     {
-      kernel = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+      kernel = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *(openCLRunTime.context), openCLRunTime.devices->at(clDeviceID));
     }
     else
     {
-      kernel = isa::OpenCL::compile("integrationSamplesDMs" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+      kernel = isa::OpenCL::compile("integrationSamplesDMs" + std::to_string(integration), *code, "-cl-mad-enable -Werror", *(openCLRunTime.context), openCLRunTime.devices->at(clDeviceID));
     }
   }
   catch ( isa::OpenCL::OpenCLError & err )
@@ -413,18 +410,18 @@ int main(int argc, char *argv[]) {
     {
       kernel->setArg(1, output_d);
     }
-    clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
+    openCLRunTime.queues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
     if ( inPlace && beforeDedispersion )
     {
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(input_d, CL_TRUE, 0, input_before.size() * sizeof(BeforeDedispersionNumericType), reinterpret_cast< void * >(input_before.data()));
+      openCLRunTime.queues->at(clDeviceID)[0].enqueueReadBuffer(input_d, CL_TRUE, 0, input_before.size() * sizeof(BeforeDedispersionNumericType), reinterpret_cast< void * >(input_before.data()));
     }
     else if ( inPlace && !beforeDedispersion )
     {
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(input_d, CL_TRUE, 0, input_after.size() * sizeof(AfterDedispersionNumericType), reinterpret_cast< void * >(input_after.data()));
+      openCLRunTime.queues->at(clDeviceID)[0].enqueueReadBuffer(input_d, CL_TRUE, 0, input_after.size() * sizeof(AfterDedispersionNumericType), reinterpret_cast< void * >(input_after.data()));
     }
     else
     {
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(AfterDedispersionNumericType), reinterpret_cast< void * >(output.data()));
+      openCLRunTime.queues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(AfterDedispersionNumericType), reinterpret_cast< void * >(output.data()));
     }
   }
   catch ( cl::Error & err )
