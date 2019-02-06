@@ -18,6 +18,7 @@
 #include <vector>
 #include <fstream>
 
+#include <OpenCLTypes.hpp>
 #include <Kernel.hpp>
 #include <Observation.hpp>
 #include <Platform.hpp>
