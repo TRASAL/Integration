@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
-project(Integration VERSION 2.1)
+cmake_minimum_required(VERSION 3.8)
+project(Integration VERSION 3.0)
 include(GNUInstallDirs)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
@@ -13,6 +13,11 @@ if($ENV{PSRDADA})
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_PSRDADA")
   set(TARGET_LINK_LIBRARIES ${TARGET_LINK_LIBRARIES} psrdada cudart)
 endif()
+
+set(INTEGRATION_HEADER
+  include/configuration.hpp
+  include/Integration.hpp
+)
 
 # libintegration
 add_library(integration SHARED
@@ -28,6 +33,7 @@ target_include_directories(integration PRIVATE include)
 # IntegrationTesting
 add_executable(IntegrationTesting
   src/IntegrationTest.cpp
+  ${INTEGRATION_HEADER}
 )
 target_include_directories(IntegrationTesting PRIVATE include)
 target_link_libraries(IntegrationTesting PRIVATE ${TARGET_LINK_LIBRARIES})
@@ -35,6 +41,7 @@ target_link_libraries(IntegrationTesting PRIVATE ${TARGET_LINK_LIBRARIES})
 # IntegrationTuning
 add_executable(IntegrationTuning
   src/IntegrationTuning.cpp
+  ${INTEGRATION_HEADER}
 )
 target_include_directories(IntegrationTuning PRIVATE include)
 target_link_libraries(IntegrationTuning PRIVATE ${TARGET_LINK_LIBRARIES})

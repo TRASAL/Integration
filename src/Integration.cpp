@@ -73,7 +73,10 @@ void readTunedIntegrationConf(tunedIntegrationConf & tunedConf, const std::strin
     splitPoint = temp.find(" ");
     parameters->setNrItemsD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
     temp = temp.substr(splitPoint + 1);
-    parameters->setNrItemsD2(isa::utils::castToType< std::string, unsigned int >(temp));
+    splitPoint = temp.find(" ");
+    parameters->setNrItemsD2(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+    temp = temp.substr(splitPoint + 1);
+    parameters->setIntType(isa::utils::castToType< std::string, unsigned int >(temp));
 
     if ( tunedConf.count(deviceName) == 0 ) {
       std::map< unsigned int, std::map< unsigned int, Integration::integrationConf * > * >  * externalContainer = new std::map< unsigned int, std::map< unsigned int, Integration::integrationConf * > * >();
