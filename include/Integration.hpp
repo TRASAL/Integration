@@ -436,7 +436,7 @@ std::string *getIntegrationInPlaceOpenCL(const integrationConf &conf, const Astr
     {
         std::string sample_s = std::to_string(sample);
         std::string offset_s = std::to_string(sample * integration * conf.getNrThreadsD0());
-        std::string *temp = 0;
+        std::string * temp = nullptr;
 
         temp = isa::utils::replace(&defs_sTemplate, "<%NUM%>", sample_s);
         defs_s->append(*temp);
