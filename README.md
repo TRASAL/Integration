@@ -21,7 +21,7 @@ Then build and test as follows:
 
 * [utils](https://github.com/isazi/utils) - master branch
 * [OpenCL](https://github.com/isazi/OpenCL) - master branch
-* [AstroData](https://github.com/isazi/AstroData) - master branch
+* [AstroData](https://github.com/TRASAL/AstroData) - master branch
 
 # Included programs
 
